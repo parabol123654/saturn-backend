@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="saturn_backend.ControlPanel" t-inherit="web.ControlPanel" t-inherit-mode="extension">
+    <xpath expr="//div[hasclass('o_control_panel_breadcrumbs')]" position="inside">
+        <button class="btn btn-link o_saturn_bookmark px-1 d-print-none"
+                t-att-class="{ on: this.saturnIsBookmarked }"
+                t-att-title="this.saturnIsBookmarked ? 'Remove from workspace' : 'Add to workspace'"
+                t-on-click="this.toggleSaturnBookmark">
+            <i t-att-class="this.saturnIsBookmarked ? 'ri-bookmark-fill' : 'ri-bookmark-line'"/>
+        </button>
+    </xpath>
+</t>
+
+</templates>

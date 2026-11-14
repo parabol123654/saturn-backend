@@ -1,0 +1,106 @@
+///
+/// Saturn Theme brand — type and surfaces.
+///
+/// Source: Saturn Theme brand guideline, via the `brand-standards` skill.
+/// The brand's colours live with the rest of the chrome tokens, in
+/// `variables.scss` and `dark_chrome.scss`; what is left here is everything
+/// that is not a colour — the two type tiers, and the surface treatment the
+/// guideline asks for (flat, unframed, no decorative gradient).
+///
+
+// Vendored rather than pulled from Google Fonts: the backend must keep working
+// on an air-gapped host, the guideline treats these files as brand assets, and
+// Be Vietnam Pro carries the full Vietnamese alphabet, so a dual-language
+// string never switches face mid-sentence.
+@each $weight, $file in (300: "Light", 400: "Regular", 500: "Medium") {
+    @font-face {
+        font-family: "Be Vietnam Pro";
+        font-style: normal;
+        font-weight: $weight;
+        font-display: swap;
+        src: url("/saturn_backend/static/src/fonts/BeVietnamPro-#{$file}.ttf") format("truetype");
+    }
+}
+
+@each $weight, $file in (400: "Regular", 600: "SemiBold") {
+    @font-face {
+        font-family: "Archivo Narrow";
+        font-style: normal;
+        font-weight: $weight;
+        font-display: swap;
+        src: url("/saturn_backend/static/src/fonts/ArchivoNarrow-#{$file}.ttf") format("truetype");
+    }
+}
+
+@font-face {
+    font-family: "Roboto Mono";
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url("/saturn_backend/static/src/fonts/RobotoMono-Regular.ttf") format("truetype");
+}
+
+// Tier 1 is the default for everything; Tier 2 is reserved for outward-facing
+// brand pieces, so the backend only uses it for the drawer's own brand headers.
+$saturn-font-body: "Be Vietnam Pro", "Segoe UI", Calibri, Arial, sans-serif;
+$saturn-font-brand: "Archivo Narrow", "Be Vietnam Pro", Arial, sans-serif;
+$saturn-font-mono: "Roboto Mono", monospace;
+
+// `.o_web_client` rather than a bare `body`: Odoo sets the family on `body`
+// too, and matching its specificity would leave the winner up to load order.
+body.o_web_client {
+    font-family: $saturn-font-body;
+
+    // "Let size build the hierarchy" — headings are Medium, never Bold, because
+    // bold clashes with the logo wordmark.
+    h1, h2, h3, h4, h5, h6,
+    .o_form_view .oe_title input,
+    .o_breadcrumb .active {
+        font-family: $saturn-font-body;
+        font-weight: 500;
+    }
+
+    // Tier 2, kept to the drawer's brand headers and short labels only. The
+    // selectors repeat island.scss's own nesting because it sets the tab weight
+    // at five classes deep — a shorter selector here loses the tie and the
+    // header renders at Medium instead of SemiBold.
+    .island .island_area {
+        .apps_switch .nav-segment .nav-link,
+        .island_bookmarks .o_command_category .u_cate_wrap > span,
+        .apps_switch .island_fn > span {
+            font-family: $saturn-font-brand;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .island_menu_results .island_menu_results_title {
+            font-family: $saturn-font-mono;
+            letter-spacing: 0.04em;
+        }
+    }
+
+    // The blobs behind the drawer are a decorative gradient, which the brand
+    // does not use. A flat field replaces them.
+    .island_mask {
+        display: none;
+    }
+
+    // The token, not a literal: this rule outranks `dark_chrome.scss` on
+    // specificity, so a hardcoded white here painted the drawer white in the
+    // dark scheme too.
+    .island_mask_layout {
+        background: $saturn-bg;
+    }
+
+    // No frames, borders or shadows on imagery.
+    .u_app_icon_l2,
+    .u_app_icon_l1 {
+        box-shadow: none;
+    }
+
+    // The wordmark is neither rebuilt nor recoloured: both official colourways
+    // ship and the scheme picks one. `sidenav.scss` already letterboxes it with
+    // `object-fit: contain`, so nothing here needs to size it — a rule that did
+    // would be the one thing the guideline forbids.
+}

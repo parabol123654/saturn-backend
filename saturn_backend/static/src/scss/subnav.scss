@@ -1,0 +1,113 @@
+// Hover flyout: the app's menu tree in cards that wrap into columns. The panel
+// itself is a stock Odoo popover, so only its contents are styled here.
+
+.sidenav_2nd {
+    --o-navbar-height: #{$saturn-navbar-height};
+
+    .subnav_wrapper {
+        --dropdown-link-hover-color: #fff;
+        --dropdown-link-hover-bg: #{$saturn-bg};
+        --dropdown-header-padding-x: 20px;
+        --dropdown-header-padding-y: 0.5rem;
+        padding: 12px;
+        max-height: 719px;
+        gap: 10px;
+        contain: layout paint style;
+        will-change: transform, opacity;
+        transform-origin: top left;
+    }
+
+    .subnav_sect {
+        width: 203px;
+        min-width: 203px;
+        background-color: saturn-alpha(bg, 0.3);
+        border: 1px solid $saturn-border !important;
+        border-radius: $saturn-radius;
+    }
+}
+
+// Section cards and their rows, wherever they are rendered.
+.subnav_sect {
+    .subnav_sect_header {
+        padding: 0 4px 0 3px;
+        margin: 6px 0;
+
+        .u_app_icon {
+            width: 20px;
+            height: 20px;
+            margin-right: 8px;
+
+            > i {
+                color: $saturn-accent;
+            }
+        }
+
+        // The label carries .fs-7 .fw-sbold in the markup; only the colour and
+        // casing come from here.
+        > span {
+            color: $saturn-accent;
+            text-transform: uppercase;
+        }
+
+        > i {
+            color: saturn-alpha(text, 0.27);
+        }
+    }
+
+    .subnav_sect_body {
+        display: none;
+
+        &.is-open {
+            display: block;
+        }
+    }
+
+    // Header of a nested menu group inside a section.
+    .dropdown-menu_group {
+        padding: 2px 15px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: saturn-alpha(text, 0.55);
+    }
+
+    .subnav_entry {
+        display: flex;
+        align-items: center;
+        padding: 3px 15px;
+        margin-bottom: 1px;
+        border-radius: $saturn-radius-sm;
+        font-size: 0.83125rem;
+        color: $saturn-text;
+        text-decoration: none;
+
+        &.on,
+        &:hover,
+        &:focus {
+            color: $saturn-accent;
+            background-color: $saturn-accent-soft;
+        }
+    }
+
+    .indicator-pill {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 16px;
+        height: 16px;
+        padding: 0 6px;
+        margin-right: 6px;
+        border-radius: 6px;
+
+        &::before {
+            content: "";
+            width: 4px;
+            height: 4px;
+            border-radius: 8px;
+            background-color: rgba(176, 137, 67, 0.5);
+        }
+    }
+
+    .subnav_entry.on .indicator-pill::before {
+        background-color: $saturn-gold;
+    }
+}

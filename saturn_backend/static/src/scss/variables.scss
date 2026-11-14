@@ -1,0 +1,97 @@
+// Metrics are scheme independent, so they stay plain SCSS.
+$saturn-navbar-height: 46px;
+$saturn-sidenav-collapsed: 56px;
+$saturn-radius: 0.5rem;
+$saturn-radius-lg: 0.8125rem;
+$saturn-radius-sm: 0.4375rem;
+
+// Chrome colours are CSS custom properties rather than SCSS literals, because
+// the light/dark switch has to work at runtime: this file ships the light set
+// in the shared backend bundle and `dark_chrome.scss` overrides it inside
+// `web.assets_web_dark`. Hardcoding them here is what made the sidebar stay
+// dark after switching to light.
+//
+// The values are the Saturn Theme palette: White #FFFFFF, Light Gray #E1E3E4,
+// Dark Gray #3C3D3E, Black #000000, hairline rule #C8C8C8. Black is what an
+// active element is painted with. The one concession is the muted gold #B68A3E,
+// which the guideline allows in working tools where a state has to read at a
+// glance — here, pinned and bookmarked, and nowhere else.
+:root {
+    --saturn-bg: #fff;
+    --saturn-bg-rgb: 255, 255, 255;
+    --saturn-bg-alt: #e1e3e4;
+    --saturn-bg-sunken: #f4f5f5;
+    --saturn-border: #c8c8c8;
+
+    --saturn-text: #3c3d3e;
+    --saturn-text-rgb: 60, 61, 62;
+    --saturn-text-muted: #55565a;
+    --saturn-text-dim: #6e7071;
+
+    --saturn-accent: #000;
+    --saturn-accent-rgb: 0, 0, 0;
+    --saturn-gold: #b68a3e;
+    --saturn-gold-soft: rgba(182, 138, 62, 0.6);
+    --saturn-link: #3c3d3e;
+    --saturn-pin: #b68a3e;
+    --saturn-pin-off: #6e7071;
+
+    --saturn-node-bg: rgba(0, 0, 0, 0.03);
+    --saturn-node-border: rgba(0, 0, 0, 0.14);
+
+    // App/menu icon tiles. The active one inverts, so it needs its own pair.
+    // Flat, not moulded: the brand uses no gradients and no decorative shadow.
+    --saturn-icon-bg: #e1e3e4;
+    --saturn-icon-shadow: none;
+    --saturn-icon-active-bg: #000;
+    --saturn-icon-active-color: #fff;
+    // Glyph drawn on top of an accent-filled pill.
+    --saturn-on-accent: #fff;
+    // Selected drawer tab.
+    --saturn-tab-active-bg: #e1e3e4;
+    // Ticked list row. Same pair as the search panel's selected row.
+    --saturn-row-selected-bg: #e1e3e4;
+    --saturn-row-selected-color: #000;
+    --saturn-row-selected-hover-bg: #d3d5d6;
+}
+
+/// Translucent shade of a chrome colour.
+/// `saturn-alpha(text, 0.14)` -> `rgba(var(--saturn-text-rgb), 0.14)`, which keeps
+/// the alpha steps readable while still resolving per scheme.
+@function saturn-alpha($channel, $alpha) {
+    @return unquote("rgba(var(--saturn-#{$channel}-rgb), #{$alpha})");
+}
+
+// Aliases, so the chrome stylesheets read as colours rather than var() noise.
+$saturn-bg: var(--saturn-bg);
+$saturn-bg-alt: var(--saturn-bg-alt);
+$saturn-bg-sunken: var(--saturn-bg-sunken);
+$saturn-border: var(--saturn-border);
+$saturn-text: var(--saturn-text);
+$saturn-text-muted: var(--saturn-text-muted);
+$saturn-text-dim: var(--saturn-text-dim);
+$saturn-accent: var(--saturn-accent);
+$saturn-gold: var(--saturn-gold);
+$saturn-gold-soft: var(--saturn-gold-soft);
+$saturn-link: var(--saturn-link);
+$saturn-pin: var(--saturn-pin);
+$saturn-pin-off: var(--saturn-pin-off);
+$saturn-node-bg: var(--saturn-node-bg);
+$saturn-node-border: var(--saturn-node-border);
+$saturn-accent-soft: saturn-alpha(accent, 0.098);
+
+// Utilities the chrome relies on. Odoo ships all three; they are repeated with
+// Odoo's own values so the module also styles correctly on a stripped bundle
+// and never changes them where Odoo does define them.
+.fs-7 {
+    // 0.77 x the 0.875rem body size == 10.78px on a 16px root.
+    font-size: 0.67375rem;
+}
+
+.fw-sbold {
+    font-weight: 500;
+}
+
+.text-dodger {
+    color: $saturn-gold;
+}

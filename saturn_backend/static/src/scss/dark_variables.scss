@@ -1,0 +1,81 @@
+///
+/// Dark palette for the backend — Saturn Theme grays.
+///
+/// Odoo 20 Community ships no real dark colour scheme: `web.assets_web_dark`
+/// only adds a handful of cosmetic `*.dark.scss` patches, so the bundle comes out
+/// identical to the light one. This file is prepended to that bundle, i.e. it
+/// runs before Odoo's own `!default` declarations, which makes it a genuine
+/// variable override rather than a pile of CSS corrections.
+///
+/// Everything is derived from one move: Odoo's grayscale is replaced by the
+/// brand ramp. Body background, borders, muted text, inputs, dropdowns, modals
+/// and tables all read from that ramp, so they follow automatically instead of
+/// needing a rule each.
+///
+/// Note this is a *bundle* override: SCSS variables resolve at compile time, so
+/// unlike the `--saturn-*` chrome tokens this palette is fixed for the whole
+/// database rather than switchable at runtime.
+///
+
+$o-webclient-color-scheme: dark;
+
+// Swapped with the grays: plenty of components use `$white` as a surface and
+// `$black` as emphasis, so leaving these alone is what makes a "dark" theme
+// keep punching white panels through the page.
+$o-white: #000;
+$o-black: #fff;
+
+// The brand's four grays, interpolated to the nine steps Odoo needs. The
+// anchors are the official values: #E1E3E4 Light Gray, #C8C8C8 Rule,
+// #3C3D3E Dark Gray, black and white at the ends.
+$o-gray-100: #0b0b0c;
+$o-gray-200: #1c1d1e;
+$o-gray-300: #3c3d3e;
+$o-gray-400: #55565a;
+$o-gray-500: #6e7071;
+$o-gray-600: #8d8f90;
+$o-gray-700: #c8c8c8;
+$o-gray-800: #e1e3e4;
+$o-gray-900: #fff;
+
+// Text sits at the light end of the ramp; headings one step lighter.
+$o-main-text-color: #e1e3e4;
+$o-main-headings-color: #fff;
+
+// Views are one step above the body so sheets and cards read as raised.
+$o-view-background-color: #1c1d1e;
+
+// White is what Black is in light mode: the colour a primary action takes.
+// Light Gray rather than pure white keeps a page of buttons from glaring.
+$o-brand-primary: #e1e3e4;
+$o-brand-secondary: #3c3d3e;
+$o-action: #e1e3e4;
+
+// Links lighten instead of darken, otherwise they sink into the background.
+$o-main-link-color: #c8c8c8;
+
+// Bootstrap's own contextual pair. Odoo maps these to the ends of the ramp,
+// which is too extreme once inverted, so pull both one step inwards.
+$light: #3c3d3e;
+$dark: #c8c8c8;
+
+// Notebook tabs sit directly on the sheet; a filled active tab would show as a
+// black block now that $white is inverted.
+$nav-tabs-link-active-bg: transparent;
+
+// Swapping $white and $black above has one consequence that reaches well beyond
+// surfaces: Bootstrap picks readable text with `color-contrast()`, which chooses
+// between `$color-contrast-dark` and `$color-contrast-light` — and those default
+// to `$black` and `$white`. Inverted, every component asking for a contrasting
+// colour gets the opposite of what it needs, on any surface that stays light.
+// Pin both to the real thing; they are answers about contrast, not palette.
+$color-contrast-dark: #000;
+$color-contrast-light: #fff;
+
+// The selected row of a search panel is the clearest case of that. Odoo derives
+// its background from `$o-info` — a pale sky blue that is off-palette here
+// anyway — and its text from `$o-black`, which is white in this file: the label
+// came out white on #d4ebfa, a contrast ratio of about 1.2:1. A brand gray with
+// white on it reads as a selection without shouting in a dark panel.
+$o-list-group-active-bg: #3c3d3e;
+$o-list-group-active-color: #fff;

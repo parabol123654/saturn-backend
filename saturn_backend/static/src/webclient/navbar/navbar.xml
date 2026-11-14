@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="saturn_backend.NavBar" t-inherit="web.NavBar" t-inherit-mode="extension">
+    <xpath expr="//t[@t-call='web.NavBar.AppsMenu']" position="before">
+        <div class="d-flex align-items-center">
+            <button id="island_toggler" class="btn d-flex px-1" accesskey="h"
+                    data-hotkey="h" title="Main Menu" t-on-click="this.onSaturnToggle">
+                <i class="ri-apps-2-line"/>
+            </button>
+            <a t-if="this.ui.isSmall" class="u_navbar_logo d-flex align-items-center" href="/odoo">
+                <img t-att-src="this.saturn.logoMiniUrl" alt=""/>
+            </a>
+        </div>
+    </xpath>
+</t>
+
+</templates>

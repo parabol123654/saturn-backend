@@ -1,0 +1,426 @@
+// Full screen app drawer.
+
+.island {
+    z-index: 1000;
+    background-color: $saturn-bg;
+
+    &[scheme="dark"] {
+        --color-background-app-node: #{$saturn-node-bg};
+        --color-background-accent-1: #5a7fff90;
+        --color-background-accent-2: #473876;
+        --color-background-accent-3: #8e4ec6;
+        --color-background-accent-4: #004074;
+    }
+
+    &:not([scheme="dark"]) {
+        --color-background-app-node: rgba(255, 255, 255, 0.75);
+        --color-background-accent-1: #0037ed54;
+        --color-background-accent-2: #d4cafe;
+        --color-background-accent-3: #8e4ec6;
+        --color-background-accent-4: #c2e5ff;
+    }
+
+    &.o_wdl {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    .island_mask_layout {
+        display: flex;
+        position: relative;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+    }
+
+    .island_content {
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    // Soft colour blobs standing in for a company background image.
+    .island_mask {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        overflow: hidden;
+        pointer-events: none;
+
+        .island_blob {
+            position: absolute;
+            display: block;
+            border-radius: 50%;
+            // Kept low: overlapping blurs at a higher opacity wash the middle
+            // of the screen out to a flat grey.
+            filter: blur(90px);
+            opacity: 0.3;
+        }
+
+        .island_blob_1 {
+            width: 60vw;
+            height: 60vw;
+            top: -20vw;
+            right: -10vw;
+            background: var(--color-background-accent-2);
+        }
+
+        .island_blob_2 {
+            width: 45vw;
+            height: 45vw;
+            bottom: -18vw;
+            left: -8vw;
+            background: var(--color-background-accent-4);
+        }
+
+        .island_blob_3 {
+            width: 32vw;
+            height: 32vw;
+            top: 30%;
+            right: 12%;
+            background: var(--color-background-accent-1);
+            opacity: 0.16;
+        }
+    }
+
+    .island_area {
+        width: auto;
+        height: 100%;
+        max-height: unset;
+        flex-direction: column;
+        display: flex;
+
+        .nav-link,
+        .dropdown-item {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        // -- Tabs ---------------------------------------------------------
+        .apps_switch {
+            padding-inline: 15px;
+            min-height: 54px;
+            display: flex;
+            align-items: center;
+
+            .nav-segment {
+                display: flex;
+                list-style: none;
+                margin: 0;
+                padding: 0;
+                gap: 2px;
+
+                // Same values Odoo's .nav-segment computes, restated so the
+                // drawer also renders correctly outside the backend bundle.
+                .nav-link {
+                    display: block;
+                    padding: 0.3rem 0.6rem;
+                    border-radius: $saturn-radius;
+                    font-size: 0.81375rem;
+                    font-weight: 500;
+                    color: $saturn-text-dim;
+                    text-decoration: none;
+
+                    &:hover {
+                        color: $saturn-text;
+                    }
+
+                    &.active {
+                        color: $saturn-text;
+                        background-color: var(--saturn-tab-active-bg);
+                    }
+                }
+
+                // Sits apart from the tab pair: it leaves the drawer rather
+                // than switching between its panes.
+                .island_close .nav-link {
+                    margin-right: 10px;
+                    color: $saturn-text-muted;
+
+                    i {
+                        font-size: 0.9em;
+                    }
+                }
+            }
+
+            .island_fn {
+                width: 100%;
+                display: inline-flex;
+                justify-content: space-between;
+                align-items: baseline;
+
+                > span {
+                    color: $saturn-link;
+                    background: linear-gradient($saturn-gold-soft, $saturn-gold-soft) no-repeat bottom left;
+                    background-size: 100% 1.5px;
+                }
+            }
+
+            .u_toolkit {
+                padding-block: 12px;
+
+                .btn {
+                    color: saturn-alpha(text, 0.7);
+                    border-radius: $saturn-radius-sm;
+
+                    &:hover {
+                        background-color: $saturn-bg-alt;
+                        color: $saturn-text;
+                    }
+
+                    &.active {
+                        background-color: $saturn-bg-alt;
+                        color: $saturn-gold;
+                    }
+                }
+            }
+        }
+
+        // -- App grid -----------------------------------------------------
+        .island_apps,
+        .island_all_apps {
+            --u-app-cow: 108px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, var(--u-app-cow));
+            justify-content: center;
+            column-gap: 1.98rem;
+            row-gap: 2.3rem;
+            max-width: 980px;
+            margin-inline: auto;
+            overflow-x: hidden;
+            padding-top: 10px;
+            padding-bottom: 17px;
+
+            &:empty {
+                display: none;
+            }
+
+            // Pin editing keeps every star visible.
+            &.u_editing_pins .u_app_pin_btn {
+                opacity: 1;
+                transform: scale(1);
+                pointer-events: auto;
+            }
+
+            .u_app_square {
+                width: 112px;
+                padding-inline: 0;
+            }
+
+            .u_app_icon_l2 {
+                position: relative;
+                width: min-content;
+                margin: 0 auto;
+                transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+                background: var(--color-background-app-node);
+                border: 1px solid $saturn-node-border;
+                border-radius: $saturn-radius-lg;
+                corner-shape: squircle;
+
+                .u_app_icon_l1 {
+                    border-radius: $saturn-radius-lg;
+                    corner-shape: squircle;
+                    padding: 11px;
+
+                    .u_app_icon {
+                        height: 45px;
+                        width: 45px;
+
+                        i {
+                            font-size: 38px;
+                            color: $saturn-text-dim;
+                        }
+                    }
+                }
+            }
+
+            .u_app_caption {
+                max-width: 80%;
+                margin: 0 auto;
+                text-align: center;
+                color: $saturn-text-muted;
+                font-size: 0.875rem;
+            }
+
+            .o_app {
+                text-decoration: none;
+
+                &:hover {
+                    background-color: transparent !important;
+
+                    .u_app_icon_l2 {
+                        box-shadow: -2px -2px 0 rgba(255, 255, 255, 0.08),
+                            2px 2px 0 rgba(0, 0, 0, 0.5);
+
+                        .u_app_icon {
+                            transform: translateY(-1px);
+                        }
+
+                        .u_app_pin_btn {
+                            opacity: 1;
+                            transform: scale(1);
+                            pointer-events: auto;
+                        }
+                    }
+                }
+            }
+
+            .u_app_pin_btn {
+                opacity: 0;
+                pointer-events: none;
+                top: -8px;
+                right: -8px;
+                background: rgba(255, 255, 255, 0.6);
+                border: 1px solid rgba(255, 255, 255, 0.5);
+                box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.05);
+                color: rgba(0, 0, 0, 0.65);
+                width: 24px;
+                height: 24px;
+                transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+                &.is_pinned {
+                    opacity: 1;
+                    transform: scale(1);
+                    pointer-events: auto;
+                    color: $saturn-pin;
+                }
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.95);
+                    border-color: rgba(255, 255, 255, 0.9);
+                    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15), 0 2px 6px rgba(0, 0, 0, 0.08);
+
+                    &:not(.is_pinned) {
+                        color: $saturn-pin;
+                    }
+
+                    &.is_pinned {
+                        color: $saturn-pin-off;
+                    }
+                }
+
+                i {
+                    font-size: 13px;
+                    margin-top: 0.7px;
+                }
+            }
+
+            // Second affordance on the tile, opposite the pin star: drops the
+            // app straight into the workspace.
+            .u_app_bookm_btn {
+                right: auto;
+                left: -8px;
+
+                &.is_pinned {
+                    color: $saturn-link;
+                }
+
+                &:hover:not(.is_pinned) {
+                    color: $saturn-link;
+                }
+
+                &:hover.is_pinned {
+                    color: $saturn-pin-off;
+                }
+            }
+        }
+
+        // -- Menu hits under the app grid ---------------------------------
+        .island_menu_results {
+            max-width: 980px;
+            margin-inline: auto;
+
+            .island_menu_results_title {
+                color: $saturn-link;
+                display: block;
+                margin-bottom: 6px;
+            }
+
+            .island_menu_result {
+                color: $saturn-text;
+                padding: 5px 8px;
+                border-radius: 7px;
+
+                &:hover {
+                    background-color: $saturn-accent-soft;
+                    color: $saturn-accent;
+                }
+            }
+        }
+
+        // -- Workspace ----------------------------------------------------
+        .island_bookmarks {
+            flex: 1 1 auto;
+            min-height: 0;
+
+            .o_bookm_palette {
+                max-width: 1100px;
+                margin-inline: auto;
+            }
+
+            .o_command_category {
+                margin-bottom: 18px;
+
+                .u_cate_wrap > span {
+                    display: inline-block;
+                    margin-bottom: 15px !important;
+                    background: linear-gradient($saturn-gold-soft, $saturn-gold-soft) no-repeat bottom left;
+                    background-size: 100% 1.5px;
+                    color: $saturn-link;
+                }
+            }
+
+            .o_bookm_grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+                gap: 4px 24px;
+            }
+
+            .o_bookm_icon {
+                width: 18px;
+                height: 18px;
+                object-fit: contain;
+            }
+
+            .o_command {
+                color: $saturn-text;
+                padding: 6px 10px;
+                border: 1px solid transparent;
+                border-radius: 7px;
+
+                &:hover {
+                    background: var(--color-background-app-node);
+                    border-color: rgba(138, 160, 198, 0.3);
+                }
+
+                .o_bookm_remove {
+                    color: inherit;
+                    opacity: 0.55;
+
+                    &:hover {
+                        opacity: 1;
+                    }
+                }
+            }
+        }
+    }
+
+    // -- Search ------------------------------------------------------------
+    .island_search_bar {
+        padding-bottom: 12px;
+        border-top: 1px dotted rgba(138, 160, 198, 0.3) !important;
+        border-top-style: dotted !important;
+
+        input {
+            background-color: transparent !important;
+            color: $saturn-text;
+            box-shadow: none;
+
+            &::placeholder {
+                color: saturn-alpha(text, 0.45);
+            }
+        }
+    }
+}

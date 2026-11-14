@@ -1,0 +1,450 @@
+// Left side navigation: brand, toolbar, Apps/Menu body, recents.
+
+@keyframes saturn-sidenav-enter {
+    from {
+        opacity: 0;
+        transform: translateY(-3px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.o_sidenav {
+    // !important beats the inline width the resize handle writes, so the panel
+    // and the shell padding can never drift apart.
+    width: var(--uw-sidenav, 0px) !important;
+    // The panel is rendered from the main-components container, i.e. near the
+    // end of the body, so a fixed element without `top` would be laid out at
+    // its static offset and fall below the viewport.
+    top: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background: $saturn-bg;
+    color: $saturn-text;
+    border-right: 1px solid $saturn-border;
+    padding-inline: calc(var(--uw-sidenav, 0px) * 0.07);
+
+    span.sidenav_hr {
+        border-top: 1px solid;
+        border-image: linear-gradient(90deg, transparent, saturn-alpha(text, 0.14), transparent) 1;
+    }
+
+    // -- Brand ------------------------------------------------------------
+    .sidenav_head {
+        .navbar-brand {
+            height: 86px;
+        }
+
+        .navbar-fogo {
+            object-fit: contain;
+            max-height: 110px;
+            margin-inline: auto;
+            height: 100%;
+            width: 95%;
+        }
+
+        .navbar-mogo {
+            object-fit: contain;
+            max-width: 64px;
+            margin-inline: auto;
+            height: 100%;
+            width: 66%;
+        }
+    }
+
+    // -- Toolbar ----------------------------------------------------------
+    .sidenav_topa {
+        color: saturn-alpha(text, 0.93);
+        padding-block: 6px !important;
+
+        .btn {
+            color: inherit;
+            border-radius: $saturn-radius;
+
+            &:hover {
+                background-color: saturn-alpha(text, 0.1);
+            }
+        }
+
+        .sn_expand {
+            border: 1px solid saturn-alpha(text, 0.2);
+        }
+    }
+
+    // -- Section labels ---------------------------------------------------
+    .sidenav_subt {
+        color: saturn-alpha(text, 0.85);
+    }
+
+    // -- Body -------------------------------------------------------------
+    .sidenav_cont {
+        overflow-y: auto;
+        min-height: 0;
+        margin-block: 11px;
+        flex: 1 1 auto;
+
+        > .nav-item,
+        > .subnav_sect {
+            animation: saturn-sidenav-enter 0.18s cubic-bezier(0.4, 0, 0.2, 1) both;
+        }
+
+        .nav-item {
+            margin-block: 1.2px;
+            user-select: none;
+
+            > .nav-link {
+                display: flex;
+                color: inherit;
+                padding: 0 0 0 7px;
+                border-radius: $saturn-radius;
+                align-items: center;
+                cursor: pointer;
+                text-decoration: none;
+
+                &:focus,
+                &:hover,
+                &.on {
+                    color: $saturn-accent;
+                    background-color: $saturn-accent-soft;
+                }
+
+                &.on {
+                    font-weight: 500;
+
+                    > .icon {
+                        color: var(--saturn-icon-active-color);
+                        background: var(--saturn-icon-active-bg) !important;
+                        box-shadow: unset;
+                    }
+                }
+
+                .nav-title {
+                    padding-block: 10px;
+                    margin-left: 10px;
+                    margin-right: auto;
+                }
+            }
+        }
+
+        .nav-link > .icon {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            color: $saturn-text;
+            border-radius: $saturn-radius;
+            corner-shape: squircle;
+            background: var(--saturn-icon-bg);
+            box-shadow: var(--saturn-icon-shadow);
+            overflow: hidden;
+
+            img {
+                width: 20px;
+            }
+
+            i {
+                font-size: 18px;
+            }
+        }
+
+        // Drill-in / drill-out chevron, drawn with the icon font.
+        .nav-arrow {
+            padding: 4px 4px 4px 22px;
+
+            span::after {
+                color: saturn-alpha(text, 0.27);
+                font-family: "remixicon";
+                content: "\ea6a";
+            }
+
+            span {
+                transition: 0.18s;
+                padding: 9px 0 9px 9px;
+            }
+
+            &:hover span {
+                corner-shape: squircle;
+                border-radius: $saturn-radius;
+                background-color: $saturn-accent;
+                padding-right: 9px;
+
+                &::after {
+                    content: "\ea6c";
+                    color: var(--saturn-on-accent);
+                }
+            }
+        }
+
+        .nav-arrow-back span::after {
+            content: "\ea74" !important;
+        }
+
+        // -- Menu mode ----------------------------------------------------
+        .cockpit_head {
+            border-radius: $saturn-radius;
+            corner-shape: squircle;
+            backdrop-filter: blur(100px);
+            background-color: saturn-alpha(bg, 0.85);
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            margin-top: 0;
+        }
+
+        .cockpit_sect {
+            min-width: unset;
+            background-color: unset;
+            border: 0;
+            flex-shrink: 0;
+
+            .subnav_sect_header {
+                padding-right: 4px;
+            }
+        }
+    }
+
+    // -- Footer -----------------------------------------------------------
+    .sidenav_foot_tg {
+        padding-bottom: 11px;
+
+        .sidenav_hr {
+            margin-bottom: 12px;
+        }
+
+        .sidenav_foot_sp {
+            position: relative;
+            cursor: ns-resize;
+            transition: border-image 120ms ease;
+
+            &::before {
+                content: "";
+                position: absolute;
+                inset: -5px 0;
+                z-index: 1;
+            }
+
+            &:hover {
+                border-image: linear-gradient(90deg, transparent, saturn-alpha(text, 0.5), transparent) 1;
+            }
+        }
+
+        .btn {
+            font-size: 0.5125rem;
+            padding: 3px 8px;
+            border-radius: $saturn-radius-sm;
+            border: 1px solid $saturn-border;
+        }
+    }
+
+    .sidenav_foot {
+        margin-bottom: 11px;
+        flex: 0 0 auto;
+        display: flex;
+
+        .u_horizon_recents {
+            overflow-y: auto;
+            flex-grow: 1;
+            gap: 6px;
+        }
+
+        .u_recent_chip {
+            background: saturn-alpha(text, 0.05);
+            padding: 3px 7px;
+            font-size: 0.75rem;
+            color: saturn-alpha(text, 0.98);
+            border-radius: 0.5625rem;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 100%;
+            user-select: none;
+
+            &:hover {
+                background: saturn-alpha(text, 0.08);
+                color: $saturn-accent;
+                transform: translateY(-1px);
+            }
+
+            span {
+                font-weight: 500;
+            }
+        }
+
+        .u_foot_apps {
+            width: 100%;
+
+            .nav-link {
+                padding-left: 8px;
+                padding-block: 5px;
+                border-radius: $saturn-radius-sm;
+                color: inherit;
+
+                &:focus,
+                &:hover {
+                    color: $saturn-accent;
+                    background-color: $saturn-accent-soft;
+                }
+
+                .nav-title {
+                    margin-left: 10px;
+                    font-size: 0.805rem;
+                }
+
+                > .icon {
+                    width: 20px;
+                    height: 20px;
+                    min-width: 20px;
+
+                    img {
+                        width: 18px;
+                    }
+
+                    i {
+                        font-size: 16px;
+                    }
+                }
+            }
+        }
+    }
+
+    // -- Collapsed (icons only) -------------------------------------------
+    &.sm {
+        --uwm-sidenav: 34px;
+
+        .nav-title,
+        .nav-arrow,
+        .nav-xmini,
+        .navbar-fogo,
+        .sidenav_subs,
+        .sidenav_subt,
+        .sidenav_foot,
+        .sidenav_foot_tg {
+            display: none !important;
+        }
+
+        .sidenav_head {
+            margin-top: 1.2rem;
+
+            .sidenav_hr {
+                margin-top: 1.2rem;
+            }
+
+            .navbar-brand {
+                height: auto;
+            }
+
+            .navbar-mogo {
+                display: block !important;
+            }
+        }
+
+        .sidenav_topa {
+            flex-flow: column-reverse;
+            justify-content: center !important;
+            column-gap: 6pt !important;
+            row-gap: 14px !important;
+
+            .sn_expand {
+                transform: rotate(180deg);
+                margin-left: unset !important;
+            }
+
+            .btn {
+                padding-block: 8px !important;
+                background-color: saturn-alpha(text, 0.02);
+                border: 1.5px solid saturn-alpha(text, 0.15);
+            }
+        }
+
+        .sidenav_cont {
+            display: grid !important;
+            grid-auto-rows: min-content;
+            grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
+            padding-inline: 3px;
+            column-gap: 6pt;
+            margin-top: 0;
+
+            .nav-item > .nav-link {
+                padding-block: 6px;
+                justify-content: center;
+                padding-inline: 0;
+
+                &:focus,
+                &:hover,
+                &.on {
+                    background-color: unset;
+                }
+
+                > .icon {
+                    height: var(--uwm-sidenav);
+                    width: var(--uwm-sidenav);
+                    min-width: var(--uwm-sidenav);
+
+                    > img {
+                        width: calc(var(--uwm-sidenav) - 15px);
+                    }
+
+                    i {
+                        font-size: calc(var(--uwm-sidenav) - 15px);
+                    }
+                }
+            }
+        }
+    }
+}
+
+// Apps / Menu and Recent / Menu switches.
+.u_nav_mode_sw {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    .u_nav_mode {
+        opacity: 0.6;
+        cursor: pointer;
+        transition: 0.15s;
+
+        &:hover {
+            opacity: 0.85;
+            color: $saturn-accent;
+        }
+
+        &.on {
+            opacity: 1;
+            pointer-events: none;
+        }
+
+        &.u_disabled {
+            opacity: 0.25;
+            pointer-events: none;
+        }
+    }
+
+    .u_nav_mode_sep {
+        opacity: 0.3;
+        font-weight: 400;
+    }
+}
+
+// Squircle-masked icon button used for the menu search.
+.btn-om {
+    border-radius: unset;
+
+    i {
+        pointer-events: none;
+    }
+
+    &:hover {
+        background-color: saturn-alpha(text, 0.1);
+    }
+}
+
+.om-mask {
+    mask-position: center;
+    mask-repeat: no-repeat;
+    mask-size: contain;
+}
+
+.om-mask-blob {
+    mask-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyMDAiIGhlaWdodD0iMjAwIj48cGF0aCBkPSJNMTAwIDBDMjAgMCAwIDIwIDAgMTAwczIwIDEwMCAxMDAgMTAwIDEwMC0yMCAxMDAtMTAwUzE4MCAwIDEwMCAwIi8+PC9zdmc+");
+}
