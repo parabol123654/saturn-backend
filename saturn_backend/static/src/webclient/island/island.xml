@@ -86,7 +86,7 @@
                                 <span class="island_menu_results_title text-uppercase fs-7 fw-sbold">Menus</span>
                                 <a t-foreach="this.menuResults" t-as="entry" t-key="entry.id"
                                    class="island_menu_result d-flex align-items-center text-decoration-none"
-                                   t-att-href="entry.href || '#'"
+                                   t-att-href="this.saturn.menuHref(entry)"
                                    t-on-click="(ev) => this.onEntryClick(entry, ev)">
                                     <i class="ri-corner-down-right-line me-2 opacity-50"/>
                                     <span t-out="entry.name"/>
@@ -148,7 +148,7 @@
 <t t-name="saturn_backend.Island.AppSquare">
     <div class="u_app_square" draggable="false">
         <a role="option" class="o_app d-block" draggable="false"
-           t-att-href="app.href || '#'"
+           t-att-href="this.saturn.menuHref(app)"
            t-att-data-menu-xmlid="app.xmlid"
            t-on-click="(ev) => this.onAppClick(app, ev)">
             <div class="u_app_icon_l2">

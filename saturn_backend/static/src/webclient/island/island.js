@@ -31,11 +31,25 @@ export class SaturnIsland extends Component {
             (el) => el?.focus()
         );
 
-        useListener(window, "keydown", (ev) => {
-            if (this.state.islandOpen && ev.key === "Escape") {
-                this.saturn.closeIsland();
-            }
-        });
+        // Capture phase: the hotkey plugin calls `stopImmediatePropagation()`
+        // once any registration consumes the key, and the action hidden behind
+        // the drawer is still mounted — a list view's search bar registers
+        // Escape, so a bubbling listener here never fires over a list. A dialog
+        // or the command palette sits above the drawer and keeps its Escape.
+        useListener(
+            window,
+            "keydown",
+            (ev) => {
+                if (
+                    this.state.islandOpen &&
+                    ev.key === "Escape" &&
+                    !document.querySelector(".modal, .o_command_palette")
+                ) {
+                    this.saturn.closeIsland();
+                }
+            },
+            { capture: true }
+        );
     }
 
     get scheme() {
@@ -138,7 +152,7 @@ export class SaturnIsland extends Component {
     }
 
     appHref(app) {
-        return app.href || `/odoo/action-${app.actionID}`;
+        return this.saturn.menuHref(app);
     }
 
     isAppBookmarked(app) {

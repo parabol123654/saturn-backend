@@ -22,7 +22,7 @@
                        class="o-dropdown-item dropdown-item o-navigable subnav_entry"
                        t-att-class="{ on: this.isCurrentEntry(row.menu) }"
                        role="menuitem" tabindex="0"
-                       t-att-href="row.menu.href || '#'"
+                       t-att-href="this.saturn.menuHref(row.menu)"
                        t-att-data-menu-xmlid="row.menu.xmlid"
                        t-on-click="(ev) => this.onEntryClick(row.menu, ev)">
                         <span class="indicator-pill pe-none"/>
@@ -36,6 +36,7 @@
 
 <t t-name="saturn_backend.Subnav">
     <div class="subnav_wrapper d-flex flex-column flex-wrap"
+         t-att-style="this.props.maxHeight ? `max-height: min(719px, ${this.props.maxHeight}px)` : undefined"
          t-on-mouseenter="() => this.props.onMouseEnter and this.props.onMouseEnter()"
          t-on-mouseleave="() => this.props.onMouseLeave and this.props.onMouseLeave()">
         <t t-foreach="this.sections" t-as="section" t-key="section.id">

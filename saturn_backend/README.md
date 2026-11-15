@@ -2,7 +2,7 @@
 
 The Saturn backend chrome for Odoo 20: a
 resizable side navigation, a full screen app drawer, pinned apps and a bookmark
-workspace, on a dark Inter-based palette.
+workspace, on a grayscale palette with light and dark schemes.
 
 ## What it changes
 

@@ -12,7 +12,8 @@ The Saturn backend experience for Odoo 20:
   bookmark workspace;
 * recent-record chips, a compact icon-only sidebar mode and a colour scheme
   switch;
-* a dark, Inter-based chrome built on top of Odoo's own dark colour scheme.
+* a grayscale chrome set in Be Vietnam Pro, with working light and dark
+  colour schemes (Community ships no usable dark scheme of its own).
 """,
     "version": "20.0.1.0.0",
     "category": "Themes/Backend",

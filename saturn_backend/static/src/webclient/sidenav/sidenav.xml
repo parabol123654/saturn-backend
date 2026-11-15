@@ -80,7 +80,7 @@
                 <div class="nav-item" t-foreach="this.apps" t-as="app" t-key="app.id">
                     <a class="o-dropdown-item dropdown-item o-navigable nav-link"
                        t-att-class="{ on: this.isCurrentApp(app) }"
-                       t-att-href="app.href || '#'"
+                       t-att-href="this.saturn.menuHref(app)"
                        t-att-data-menu-xmlid="app.xmlid"
                        t-on-mouseenter="(ev) => this.onAppHover(app, ev)"
                        t-on-click="(ev) => this.onAppClick(app, ev)">
@@ -156,7 +156,7 @@
                 <div class="u_foot_apps px-2 pb-2">
                     <a t-foreach="this.saturn.pinnedApps" t-as="app" t-key="app.id"
                        class="nav-link d-flex align-items-center text-decoration-none"
-                       t-att-href="app.href || '#'"
+                       t-att-href="this.saturn.menuHref(app)"
                        t-on-click="(ev) => this.onAppClick(app, ev)">
                         <div class="icon d-flex align-items-center justify-content-center pe-none">
                             <img t-if="app.webIconData" t-att-src="app.webIconData" alt=""/>

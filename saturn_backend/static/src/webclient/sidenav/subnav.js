@@ -14,6 +14,7 @@ export class SaturnSubnav extends MenuTree {
         close: t.function().optional(),
         onMouseEnter: t.function().optional(),
         onMouseLeave: t.function().optional(),
+        maxHeight: t.number().optional(),
     });
 
     setup() {

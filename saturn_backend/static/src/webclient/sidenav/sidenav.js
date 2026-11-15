@@ -101,10 +101,24 @@ export class SaturnSidenav extends MenuTree {
             }
             this.subnav.open(target, {
                 app,
+                maxHeight: this.flyoutMaxHeight(target),
                 onMouseEnter: () => browser.clearTimeout(this.closeTimer),
                 onMouseLeave: () => this.scheduleSubnavClose(),
             });
         }, HOVER_OPEN_DELAY);
+    }
+
+    /**
+     * Room the flyout can take next to its row: it opens downwards from the
+     * row, or upwards ending at it, whichever side is taller. Capping the
+     * height there makes the wrapping column layout spill into another column
+     * instead of running off the bottom of the screen.
+     */
+    flyoutMaxHeight(target) {
+        const rect = target.getBoundingClientRect();
+        const below = browser.innerHeight - rect.top;
+        const above = rect.bottom;
+        return Math.max(160, Math.floor(Math.max(below, above) - 12));
     }
 
     scheduleSubnavClose() {
