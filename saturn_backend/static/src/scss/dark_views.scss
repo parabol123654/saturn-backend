@@ -263,3 +263,10 @@ textarea {
         color: $sd-raised;
     }
 }
+
+// Status badges (`bg-success-light`, `bg-danger-light`...): Odoo 14 paints
+// them as a half-transparent tint with a hardcoded #333 label, which is
+// unreadable once the row behind the tint is near-black.
+.o_field_badge[class*="bg-"][class*="-light"] {
+    color: #f2f2f2;
+}
