@@ -1,0 +1,265 @@
+///
+/// Dark corrections for what Odoo 14 hardcodes.
+///
+/// `dark_variables.scss` regrades everything that derives from a variable. A
+/// fair share of Odoo 14's stylesheets does not: surfaces are written as
+/// `white` or `#fff`, text as a literal gray. Those are corrected here, with
+/// the chrome tokens, and only inside the dark backend bundle.
+///
+
+$sd-bg: var(--saturn-bg);              // page
+$sd-surface: #1c1d1e;                  // sheets, cards, inputs
+$sd-raised: #232425;                   // headers, hover
+$sd-border: var(--saturn-border);
+$sd-text: var(--saturn-text);
+$sd-muted: var(--saturn-text-dim);
+
+// -- Lists --------------------------------------------------------------------
+.o_list_view {
+    thead {
+        background-color: $sd-raised;
+        border-bottom-color: $sd-border;
+
+        > tr > th:not(.o_list_record_selector) {
+            border-left-color: $sd-border;
+        }
+    }
+
+    tfoot {
+        border-top-color: $sd-border;
+        border-bottom-color: $sd-border;
+    }
+
+    tbody > tr.o_group_header {
+        background-image: none;
+        background-color: $sd-raised;
+
+        &:focus-within {
+            background-image: none;
+            background-color: #2e2f30;
+        }
+    }
+
+    .o_list_table .o_data_row.o_selected_row > .o_data_cell:not(.o_readonly_modifier):not(.o_invisible_modifier):not(.o_handle_cell) {
+        background-color: #2e2f30;
+    }
+}
+
+// -- Forms --------------------------------------------------------------------
+.o_form_view {
+    .o_form_sheet_bg {
+        // Odoo tiles a light paper texture behind the sheet.
+        background: $sd-bg;
+        border-bottom-color: $sd-border;
+
+        > .o_form_sheet {
+            background: $sd-surface;
+            border-color: $sd-border;
+            box-shadow: none;
+        }
+    }
+
+    .oe_button_box .oe_stat_button:hover,
+    .oe_stat_button:hover {
+        background-color: #2e2f30;
+    }
+
+    .o_form_statusbar {
+        border-bottom-color: $sd-border;
+    }
+}
+
+select,
+select.o_input {
+    background: $sd-surface;
+    color: $sd-text;
+}
+
+.o_input,
+.o_field_widget input,
+.form-control,
+textarea {
+    background-color: transparent;
+    color: $sd-text;
+}
+
+.form-control,
+.o_base_settings .o_setting_search .searchInput {
+    background-color: $sd-surface;
+    border-color: $sd-border;
+    color: $sd-text;
+
+    &:focus {
+        background-color: $sd-surface;
+        color: #fff;
+    }
+}
+
+// Required fields are a hardcoded lavender, with the light text on top.
+.o_required_modifier.o_input,
+.o_required_modifier .o_input {
+    background-color: #2e2f30 !important;
+}
+
+.o_field_many2manytags .o_tag_color_0,
+.o_tag_color_0 {
+    background-color: $sd-surface;
+}
+
+// -- Kanban -------------------------------------------------------------------
+.o_kanban_view {
+    .o_kanban_record,
+    .o_kanban_quick_create {
+        background-color: $sd-surface;
+        border-color: $sd-border;
+    }
+
+    .o_kanban_image_fill_left .o_kanban_image_inner_pic,
+    .o_kanban_image .o_kanban_image_inner_pic {
+        background: $sd-surface;
+        box-shadow: -1px -1px 0 1px $sd-surface;
+    }
+
+    .o_kanban_group.o_column_folded {
+        background-color: $sd-raised;
+    }
+}
+
+// -- Search -------------------------------------------------------------------
+.o_searchview {
+    background-color: $sd-surface;
+    border-color: $sd-border;
+
+    .o_searchview_input {
+        background: transparent;
+        color: $sd-text;
+    }
+}
+
+.o_search_panel {
+    background-color: $sd-surface;
+}
+
+.o_view_nocontent .o_nocontent_help,
+.o_nocontent_help {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+// -- Overlays -----------------------------------------------------------------
+.o_popover,
+.popover,
+.ui-autocomplete,
+.bootstrap-datetimepicker-widget {
+    background-color: $sd-raised;
+    color: $sd-text;
+    border-color: $sd-border;
+}
+
+.ui-autocomplete .ui-menu-item > a {
+    color: $sd-text;
+
+    &.ui-state-active,
+    &.ui-state-focus {
+        background-color: #3c3d3e;
+        color: #fff;
+    }
+}
+
+.bootstrap-datetimepicker-widget td,
+.bootstrap-datetimepicker-widget th {
+    color: $sd-text;
+}
+
+.o_switch_company_menu .dropdown-item:hover {
+    background-color: $sd-raised;
+
+    .o_py:hover {
+        background-color: #3c3d3e !important;
+    }
+}
+
+.bg-muted-full {
+    background-color: #3c3d3e;
+}
+
+// -- Settings -----------------------------------------------------------------
+// The settings tab column is painted with `gray('900')`, which is white once
+// the ramp is inverted.
+.o_base_settings .o_setting_container .settings_tab {
+    background: $sd-surface;
+
+    .tab {
+        color: $sd-muted;
+
+        &:hover,
+        &.selected {
+            background-color: #2e2f30;
+            color: #fff;
+        }
+    }
+}
+
+// -- Activity view ------------------------------------------------------------
+.o_activity_view {
+    > table,
+    .o_activity_summary_cell:not(.planned):not(.overdue):not(.today) {
+        background-color: $sd-surface;
+    }
+}
+
+// -- Discuss and chatter ------------------------------------------------------
+// Discuss paints its sidebar with the dark end of the ramp and its thread
+// white; both are inverted or hardcoded.
+.o_DiscussSidebar {
+    background-color: $sd-surface;
+    color: $sd-text;
+}
+
+.o_DiscussSidebar_separator {
+    background-color: $sd-border;
+}
+
+.o_Discuss.o-mobile,
+.o_Chatter,
+.o_Message,
+.o_MessageList,
+.o_MessageList_separatorLabel,
+.o_Composer_coreMain:not(.o-composer-is-compact),
+.o_Composer_textInput,
+.o_Composer_toolButton,
+.o_Composer_toolButtons,
+.o_ThreadView,
+.o_thread_date_separator .o_thread_date,
+.o_mail_systray_dropdown .o_mail_mobile_tabs {
+    background-color: $sd-surface;
+    color: $sd-text;
+}
+
+.o_Discuss_thread,
+.o_Discuss_content,
+.o_ThreadView_messageList {
+    background-color: $sd-bg;
+}
+
+.o_Composer_coreMain:not(.o-composer-is-compact),
+.o_Composer_textInput,
+.o_Composer_toolButtons {
+    border-color: $sd-border;
+}
+
+.o_Message.o-selected,
+.o_Message:hover {
+    background-color: $sd-raised;
+}
+
+// System notes (field changes, OdooBot) are tinted with a step of the ramp
+// that comes out as a mid-gray slab once inverted.
+.o_Message.o-not-discussion {
+    background-color: $sd-raised;
+    border-bottom-color: $sd-border;
+
+    .o_Message_partnerImStatusIcon {
+        color: $sd-raised;
+    }
+}

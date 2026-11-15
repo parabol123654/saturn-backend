@@ -1,62 +1,95 @@
-# Saturn Backend (Community) — Odoo 20
+# Saturn Backend (Community) — Odoo 14
 
-The Saturn backend chrome for Odoo 20: a
+The Saturn backend chrome for Odoo 14: a
 resizable side navigation, a full screen app drawer, pinned apps and a bookmark
-workspace, on a dark Inter-based palette.
+workspace, on a dark grayscale palette.
 
 ## What it changes
 
 | Area | Behaviour |
 | --- | --- |
 | Side navigation | Fixed 243 px panel, resizable by its right edge, collapsible to a 56 px icon rail. Switches between **Apps** (all apps) and **Menu** (current app's sections). Footer switches between **Recent** records and **pinned apps**. |
-| Hover flyout | Hovering an app opens a popover with that app's sections in wrapping 203 px cards, nested menus rendered as plain group headers. |
-| Navbar | Apps dropdown, brand and section menus are replaced by a single drawer toggle; height 46 px, `#1f2937`. |
-| App drawer | Full screen overlay with **Apps** / **Workspace** tabs, *Pinned* and *All Features* panes, squircle app tiles with pin stars, and a search field that filters apps and menus. Also acts as the home screen on `/odoo`. |
+| Hover flyout | Hovering an app opens a panel with that app's sections in wrapping 203 px cards, nested menus rendered as plain group headers. It opens downwards from the row, or upwards from a low row, and its height is capped by the room on that side so the cards spill into another column instead of off the screen. |
+| Navbar | Apps dropdown, brand and section menus are replaced by a single drawer toggle; height 46 px. |
+| App drawer | Full screen overlay with **Apps** / **Workspace** tabs, *Pinned* and *All Features* panes, squircle app tiles with pin stars, and a search field that filters apps and menus. |
 | Workspace | Bookmarked views grouped by kind, added from the bookmark button in any control panel. |
-| Toolbar | Sidebar mode, colour scheme, activity hub, workspace and command palette. |
+| Toolbar | Sidebar mode, colour scheme, activity hub, workspace and search. Odoo 14 has no command palette, so the *Commands* and *Search a menu* buttons open the drawer on its search box, which finds apps and menus by name. |
 | Systray | A second colour scheme toggle. The sidebar is hidden while the drawer is open, so this is the copy that stays reachable from every screen; it is lifted above the drawer on purpose. |
+
+## How it plugs into Odoo 14
+
+Odoo 14 still runs the **legacy web client** (`web.WebClient`, `odoo.define`
+modules), with Owl 1 only used for a few components such as the control panel.
+There are no services, no main-components registry and no popover service, so:
+
+- `static/src/js/saturn.js` is a plain module holding the shared state, with an
+  Owl `EventBus` the components re-render on;
+- `static/src/js/web_client.js` extends `web.WebClient`: once the menus are
+  loaded it hands the menu tree to the state and mounts the sidebar, the flyout
+  and the drawer (Owl 1 components, `static/src/js/sidenav.js` and
+  `island.js`) on the body. It forwards the current app
+  (`change_menu_section`), the displayed action (`current_action_updated`) and
+  URL changes (`do_push_state`, which feeds the recents);
+- menus are opened through the web client's own `on_app_clicked` /
+  `on_menu_clicked`, so breadcrumbs, the `#action=…&menu_id=…` URL and the
+  current app behave exactly as with the stock menu;
+- the bookmark star is added to the Owl control panel through its
+  `patchMixin`, the systray switch is a legacy `SystrayMenu` widget, and the
+  sidebar brings its own drag handle, since Odoo 14 has no resizable panel.
+
+Bundles are QWeb templates in this version (`views/assets.xml`), and client
+templates are listed under the manifest's `qweb` key.
+
+Odoo 14 ships **Bootstrap 4** on a 12px root font size. The chrome's markup is
+shared with the later versions of the module, so `compat_bs4.scss` provides the
+Bootstrap 5 utilities it uses (`ms-*`, `me-*`, `gap-*`, `fw-bold`, `lh-1`, …)
+and a pixel spacing scale, scoped to the chrome's own elements so the views are
+untouched; the chrome stylesheets are written in px rather than rem for the same
+reason.
 
 ## The dark palette
 
-Odoo 20 **Community still has no working dark colour scheme**, which is easy to miss:
+Odoo 14 **Community has no dark colour scheme at all**: no `color_scheme()`
+hook, no dark bundle. So the module ships both:
 
-- `ir.http.color_scheme()` returns a hardcoded `"light"`, so
-  `web.assets_web_dark` is never served and a scheme switch does nothing;
-- that bundle is only `web.assets_web` plus a handful of cosmetic
-  `*.dark.scss` patches, so even when served it comes out identical to the
-  light one.
+- `models/ir_http.py` adds `color_scheme()`, which resolves the scheme from the
+  `color_scheme` cookie, then the `saturn_color_scheme` field on the user, then
+  dark. The cookie is what the switch writes for the current browser; the
+  stored field is what carries the choice to a new browser or past a cookie
+  reset. `session_info()` reports the resolved value so the client never
+  re-derives it and cannot disagree with the stylesheets that were served;
+- `views/assets.xml` defines two dark bundles,
+  `saturn_backend.assets_common_dark` and `saturn_backend.assets_backend_dark`.
+  They are primary copies of `web.assets_common` and `web.assets_backend`, so
+  anything another module adds to the stock bundles lands in them too, and
+  `web.webclient_bootstrap` loads their **stylesheets** instead of the stock
+  ones when the scheme is dark (the JavaScript always comes from the stock
+  bundles);
+- in Odoo 14 most of `primary_variables.scss` is declared *without*
+  `!default`, so a palette has to come **after** it to win.
+  `light_variables.scss` is appended to `web._assets_primary_variables`, and
+  the dark bundles load `dark_variables.scss` right after that — later still,
+  so its plain assignments replace the light ones there. Everything declared
+  afterwards (`secondary_variables.scss`, Odoo's Bootstrap overrides,
+  Bootstrap's own variables) is `!default` and derives from these values. The
+  dark file inverts Bootstrap's gray ramp, makes `$white` the raised surface
+  colour and `$black` white, and pins `$yiq-text-dark`/`$yiq-text-light` so
+  Bootstrap 4's contrast picker still chooses readable text;
+- Odoo 14 hardcodes a fair share of its surfaces as `white` or a literal gray
+  instead of deriving them (form sheets and their paper texture, list headers,
+  kanban cards, the search box and panel, popovers, the settings tabs, Discuss
+  and the chatter). `dark_views.scss`, appended to the dark backend bundle only,
+  corrects those.
 
-So the module ships the palette itself:
-
-- `models/ir_http.py` overrides `color_scheme()` to resolve the scheme from the
-  cookie, then the `color_scheme` field on `res.users.settings`, then dark. The
-  cookie is what the switch writes for the current browser; the setting is what
-  carries the choice to a new browser or past a cookie reset. `session_info()`
-  reports the resolved value so the client never re-derives it and cannot
-  disagree with the bundle that was actually served;
-- `static/src/scss/dark_variables.scss` is **prepended** to
-  `web.assets_web_dark`, which puts it ahead of Odoo's `!default` declarations
-  and makes it a real variable override. It replaces Odoo's grayscale with the
-  Saturn Theme ramp and swaps `$o-white`/`$o-black`; body, borders, sheets,
-  inputs, dropdowns, modals and tables all derive from those;
-- `static/src/scss/light_variables.scss` does the same for light, prepended to
-  `web._assets_primary_variables`. Its values are `!default`, and that is
-  load-bearing: the dark bundle *includes* `web.assets_web`, and that include
-  runs after `dark_variables.scss`, so plain assignments would overwrite the
-  dark palette with the light one. `!default` makes each line a no-op once the
-  dark file has claimed the variable.
-
-These two regrade the **views** — lists, forms, sheets, dropdowns, modals — to
-the brand grays. Because SCSS resolves at compile time they are fixed for the
-whole database, unlike the `--saturn-*` chrome tokens, which are CSS custom
-properties and so can be swapped at runtime by the scheme switch.
+These regrade the **views** — lists, forms, sheets, dropdowns, modals — to the
+brand grays. Because SCSS resolves at compile time each bundle is fixed, unlike
+the `--saturn-*` chrome tokens, which are CSS custom properties.
 
 The chrome follows the same switch. Its colours are **CSS custom properties**,
-not SCSS literals, because the sidebar, navbar, flyout and drawer live in the
-shared `web.assets_backend` bundle and would otherwise stay dark in light mode:
+not SCSS literals:
 
 - `variables.scss` declares the tokens with the **light** values;
-- `dark_chrome.scss` is appended to `web.assets_web_dark` and overrides them;
+- `dark_chrome.scss` is appended to the dark backend bundle and overrides them;
 - `saturn-alpha(text, 0.14)` emits `rgba(var(--saturn-text-rgb), 0.14)`, so
   translucent shades resolve per scheme too.
 
@@ -75,13 +108,13 @@ memory, so editing the SCSS alone is not picked up.
 3. Restart Odoo. The backend comes up dark; the sidebar's *Switch Scheme*
    button flips the cookie back to light.
 
-Changing the `assets` block of the manifest later requires a module upgrade
-(`-u saturn_backend`), since asset declarations are read at load time.
+Changing `views/assets.xml` or the manifest's `qweb` list later requires a
+module upgrade (`-u saturn_backend`).
 
 Branding is per company, under *Settings → Companies*: `Sidebar logo`,
 `Sidebar logo (compact)` and `App drawer background`. When the background is
-empty the drawer falls back to a generated gradient; when a logo is empty the
-Saturn Theme wordmark is used.
+empty the drawer falls back to a flat field; when a logo is empty the Saturn
+Theme wordmark is used.
 
 ## The Saturn Theme brand
 
@@ -119,34 +152,34 @@ the two type tiers and the surface treatment.
 
 ## Panels that size themselves off the viewport
 
-Odoo has no side navigation, so several screens decide how many panels to show
-from the **viewport** width rather than from the room actually left over. That
-assumption holds for stock Odoo and breaks here, because the sidebar has already
-taken its share. Two screens get it badly wrong, and both are fixed the same
-way — with container queries, so nothing about the sidebar width is hardcoded
-and a narrow window or a collapsed sidebar is covered by the same rule.
-
-- **Settings.** `.o_setting_box` goes two-up at the `lg` breakpoint regardless.
-  On a ~1000px window with the sidebar dragged wide the two columns come out
-  ~190px each and the fixed-width monetary inputs spill out of their box
-  (Lunch → *Overdraft* is the clearest case). `.o_settings_container` becomes a
-  query container and drops to one column below 700px of container width.
-- **Discuss.** Worse, because its channel list and member list are both fixed
-  width: on a 960px window with the sidebar at 377px, 300px of channel list plus
-  251px of member list leave the thread a **32px** column — one character per
-  line. `.o_action_manager` becomes the query container (a plain block wrapper,
-  so `inline-size` containment cannot disturb Discuss's own flex layout, and its
-  width is exactly the room the action was given). Below 900px the member list
-  and its toggle are dropped; below 620px the channel list is capped at 220px.
-  The thread goes from 32px to 283px at that geometry.
+Odoo has no side navigation, so some screens decide how many panels to show from
+the **viewport** width rather than from the room actually left over. On Odoo 14
+the clear case is **Settings**: `.o_setting_box` goes two-up at the `lg`
+breakpoint regardless, so on a ~1000px window with the sidebar dragged wide the
+two columns come out ~190px each. `.o_settings_container` becomes a container
+query root and drops to one column below 700px of container width, so nothing
+about the sidebar width is hardcoded.
 
 ## State
 
-Per-user preferences live on `res.users.settings`, so they follow the user
-across browsers: `color_scheme`, `saturn_nav_mode`, `saturn_sidenav_collapsed`,
-`saturn_sidenav_width`, `saturn_pins`, `saturn_bookmarks`. Recently opened records are
+Odoo 14 has no `res.users.settings`, so the per-user preferences are fields on
+the user record and follow the user across browsers: `saturn_color_scheme`,
+`saturn_nav_mode`, `saturn_sidenav_collapsed`, `saturn_sidenav_width`,
+`saturn_pins`, `saturn_bookmarks`. They reach the browser with
+`session_info()`, and are written back through `res.users.saturn_set_setting`,
+which accepts only these keys and normalises each value — users cannot write
+their own record beyond Odoo's short whitelist, and widening that whitelist
+would expose the fields to every other caller of `write`. Recently opened records are
 kept in `localStorage`, under a key scoped by database and user id — a browser
 profile is often shared, and one origin can serve several databases.
+
+## Differences from the later versions
+
+- No command palette exists in Odoo 14; its buttons open the drawer's search.
+- The drawer is not used as a home screen: with no action in the URL, Odoo 14
+  opens the user's home action or the first app, as it does without the module.
+- The Discuss layout rules of the later versions (channel and member lists) have
+  no equivalent here: Odoo 14's Discuss has no member list.
 
 ## Notes
 

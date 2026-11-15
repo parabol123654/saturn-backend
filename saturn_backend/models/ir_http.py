@@ -10,19 +10,20 @@ class IrHttp(models.AbstractModel):
     def color_scheme(self):
         """Resolve the colour scheme from the cookie, then the user setting.
 
-        Odoo Community hardcodes ``"light"`` here, so ``web.assets_web_dark`` is
-        never served and the *Switch Scheme* button would have no effect. The
-        cookie wins because it is what the switch writes for the current
-        browser; the stored setting is what carries the choice to a new browser
-        or after the cookies are cleared. The chrome is designed on Odoo's dark
-        palette, hence the dark default.
+        Odoo 14 Community has no colour scheme at all, so this method and the
+        dark bundles it selects (see ``views/assets.xml``) are the module's
+        own. The cookie wins because it is what the switch writes for the
+        current browser; the stored setting is what carries the choice to a new
+        browser or after the cookies are cleared. The chrome is designed on the
+        dark palette, hence the dark default.
         """
         scheme = request.httprequest.cookies.get("color_scheme")
         if scheme in ("light", "dark"):
             return scheme
-        settings = request.env.user.sudo().res_users_settings_ids[:1]
-        if settings.color_scheme in ("light", "dark"):
-            return settings.color_scheme
+        if request.session.uid:
+            stored = request.env.user.sudo().saturn_color_scheme
+            if stored in ("light", "dark"):
+                return stored
         return "dark"
 
     def _saturn_branding_flags(self, company):
@@ -48,6 +49,8 @@ class IrHttp(models.AbstractModel):
 
     def session_info(self):
         info = super().session_info()
+        if not request.session.uid:
+            return info
         company = request.env.company
         present = self._saturn_branding_flags(company)
         info["saturn"] = {
@@ -58,5 +61,6 @@ class IrHttp(models.AbstractModel):
             "has_logo": "saturn_logo" in present,
             "has_logo_mini": "saturn_logo_mini" in present,
             "has_background": "saturn_background" in present,
+            "settings": request.env.user._saturn_settings(),
         }
         return info

@@ -1,20 +1,21 @@
 {
     "name": "Saturn Backend (Community)",
-    "summary": "Dark backend UI for Odoo 20: app drawer, sidebar navigation, pinned apps",
+    "summary": "Dark backend UI for Odoo 14: app drawer, sidebar navigation, pinned apps",
     "description": """
 Saturn Backend
 ==============
 
-The Saturn backend experience for Odoo 20:
+The Saturn backend experience for Odoo 14:
 
 * a resizable left side navigation that switches between *Apps* and *Menu* mode;
 * a full screen app drawer ("island") with pinned apps, all features and a
   bookmark workspace;
 * recent-record chips, a compact icon-only sidebar mode and a colour scheme
   switch;
-* a dark, Inter-based chrome built on top of Odoo's own dark colour scheme.
+* a dark chrome and a dark palette for the views — Odoo 14 Community has no
+  dark colour scheme of its own, so the module ships both bundles.
 """,
-    "version": "20.0.1.0.0",
+    "version": "14.0.1.0.0",
     "category": "Themes/Backend",
     "author": "Manh Nguyen",
     "license": "AGPL-3",
@@ -23,52 +24,15 @@ The Saturn backend experience for Odoo 20:
     "images": ["static/description/banner.png"],
     "depends": ["web", "mail"],
     "data": [
+        # Bundles are QWeb templates in Odoo 14, not a manifest key.
+        "views/assets.xml",
         "views/res_company_views.xml",
     ],
-    "assets": {
-        # Prepended, so it lands before Odoo's own `primary_variables.scss` and
-        # its `!default` values never fire. This is what regrades the views
-        # themselves rather than painting over them.
-        "web._assets_primary_variables": [
-            ("prepend", "saturn_backend/static/src/scss/light_variables.scss"),
-        ],
-        "web.assets_web_dark": [
-            # Prepended, so it lands before Odoo's own `!default` variable
-            # declarations and actually overrides the palette.
-            ("prepend", "saturn_backend/static/src/scss/dark_variables.scss"),
-            # Appended: overrides the chrome tokens declared in variables.scss.
-            "saturn_backend/static/src/scss/dark_chrome.scss",
-        ],
-        "web.assets_backend": [
-            # Icon font used throughout the chrome, vendored so the backend
-            # makes no external requests (Remix Icon, Apache-2.0).
-            "saturn_backend/static/lib/remixicon/remixicon.css",
-            "saturn_backend/static/src/scss/variables.scss",
-            "saturn_backend/static/src/scss/webclient.scss",
-            "saturn_backend/static/src/scss/sidenav.scss",
-            "saturn_backend/static/src/scss/subnav.scss",
-            "saturn_backend/static/src/scss/island.scss",
-            "saturn_backend/static/src/scss/navbar.scss",
-            # Last of the stylesheets: the brand type and surface rules have
-            # to win the ties against the chrome sheets above.
-            "saturn_backend/static/src/scss/brand_saturn.scss",
-            "saturn_backend/static/src/core/saturn_service.js",
-            "saturn_backend/static/src/core/section_icons.js",
-            "saturn_backend/static/src/webclient/sidenav/menu_tree.js",
-            "saturn_backend/static/src/webclient/sidenav/subnav.js",
-            "saturn_backend/static/src/webclient/sidenav/subnav.xml",
-            "saturn_backend/static/src/webclient/sidenav/sidenav.js",
-            "saturn_backend/static/src/webclient/sidenav/sidenav.xml",
-            "saturn_backend/static/src/webclient/island/island.js",
-            "saturn_backend/static/src/webclient/island/island.xml",
-            "saturn_backend/static/src/webclient/navbar/navbar.js",
-            "saturn_backend/static/src/webclient/navbar/navbar.xml",
-            "saturn_backend/static/src/webclient/systray/scheme_switch.js",
-            "saturn_backend/static/src/webclient/systray/scheme_switch.xml",
-            "saturn_backend/static/src/search/bookmark_button.js",
-            "saturn_backend/static/src/search/bookmark_button.xml",
-        ],
-    },
+    "qweb": [
+        "static/src/xml/sidenav.xml",
+        "static/src/xml/island.xml",
+        "static/src/xml/chrome.xml",
+    ],
     "installable": True,
     "application": False,
 }

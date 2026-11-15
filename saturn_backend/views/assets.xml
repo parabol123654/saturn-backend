@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Odoo 14 declares bundles as QWeb templates rather than in the manifest.
+
+        The light palette goes right AFTER Odoo's own primary variables: most of
+        them are declared without `!default` in this version, so a later plain
+        assignment is what overrides them.
+    -->
+    <template id="_assets_primary_variables" inherit_id="web._assets_primary_variables">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/light_variables.scss"/>
+        </xpath>
+    </template>
+
+    <template id="assets_backend" inherit_id="web.assets_backend" name="Saturn Backend assets">
+        <xpath expr="." position="inside">
+            <!-- Icon font used throughout the chrome, vendored so the backend
+                 makes no external requests (Remix Icon, Apache-2.0). -->
+            <link rel="stylesheet" type="text/css" href="/saturn_backend/static/lib/remixicon/remixicon.css"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/variables.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/compat_bs4.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/webclient.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/sidenav.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/subnav.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/island.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/navbar.scss"/>
+            <!-- Last of the stylesheets: the brand type and surface rules have
+                 to win the ties against the chrome sheets above. -->
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/brand_saturn.scss"/>
+            <script type="text/javascript" src="/saturn_backend/static/src/js/section_icons.js"/>
+            <script type="text/javascript" src="/saturn_backend/static/src/js/saturn.js"/>
+            <script type="text/javascript" src="/saturn_backend/static/src/js/sidenav.js"/>
+            <script type="text/javascript" src="/saturn_backend/static/src/js/island.js"/>
+            <script type="text/javascript" src="/saturn_backend/static/src/js/web_client.js"/>
+            <script type="text/javascript" src="/saturn_backend/static/src/js/scheme_switch.js"/>
+            <script type="text/javascript" src="/saturn_backend/static/src/js/bookmark_button.js"/>
+        </xpath>
+    </template>
+
+    <!--
+        Dark bundles. Odoo 14 Community has no colour scheme, so these are the
+        module's own: copies (primary inheritance) of the two stylesheets
+        bundles the web client loads, in which the SCSS helpers also load
+        `dark_variables.scss` right after the primary variables. Being
+        inherited copies, they follow whatever any other module adds to the
+        stock bundles. Only their CSS is served; the JavaScript always comes
+        from the stock bundles.
+    -->
+    <template id="_assets_helpers_dark" inherit_id="web._assets_helpers" primary="True">
+        <xpath expr="//t[@t-call='web._assets_primary_variables']" position="after">
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/dark_variables.scss"/>
+        </xpath>
+    </template>
+
+    <template id="assets_common_dark" inherit_id="web.assets_common" primary="True" name="Common Assets (dark)">
+        <xpath expr="//t[@t-call='web._assets_helpers']" position="attributes">
+            <attribute name="t-call">saturn_backend._assets_helpers_dark</attribute>
+        </xpath>
+    </template>
+
+    <template id="assets_backend_dark" inherit_id="web.assets_backend" primary="True" name="Backend Assets (dark)">
+        <xpath expr="//t[@t-call='web._assets_helpers']" position="attributes">
+            <attribute name="t-call">saturn_backend._assets_helpers_dark</attribute>
+        </xpath>
+        <xpath expr="." position="inside">
+            <!-- Appended: dark values of the chrome tokens, and corrections
+                 for the colours Odoo 14 hardcodes in its views. -->
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/dark_chrome.scss"/>
+            <link rel="stylesheet" type="text/scss" href="/saturn_backend/static/src/scss/dark_views.scss"/>
+        </xpath>
+    </template>
+
+    <!-- The scheme is resolved server side (ir.http.color_scheme) and decides
+         which stylesheets the web client is served. -->
+    <template id="webclient_bootstrap" inherit_id="web.webclient_bootstrap">
+        <xpath expr="//t[@t-call-assets='web.assets_common'][@t-js='false']" position="replace">
+            <t t-set="saturn_dark" t-value="session_info.get('saturn', {}).get('color_scheme') == 'dark'"/>
+            <t t-if="saturn_dark" t-call-assets="saturn_backend.assets_common_dark" t-js="false"/>
+            <t t-if="not saturn_dark" t-call-assets="web.assets_common" t-js="false"/>
+        </xpath>
+        <xpath expr="//t[@t-call-assets='web.assets_backend'][@t-js='false']" position="replace">
+            <t t-if="saturn_dark" t-call-assets="saturn_backend.assets_backend_dark" t-js="false"/>
+            <t t-if="not saturn_dark" t-call-assets="web.assets_backend" t-js="false"/>
+        </xpath>
+    </template>
+
+</odoo>

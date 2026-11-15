@@ -1,7 +1,7 @@
 ///
 /// Dark values for the chrome tokens declared in `variables.scss`.
 ///
-/// Appended to `web.assets_web_dark`, so it is only served when
+/// Appended to `saturn_backend.assets_backend_dark`, so it is only served when
 /// `ir.http.color_scheme()` answers "dark". Everything the sidebar, navbar and
 /// app drawer paint with reads from these, which is what lets the
 /// *Switch Scheme* button flip the chrome along with the rest of the backend.
@@ -51,14 +51,4 @@
 // painted as one surface behind everything else.
 .island_mask_layout {
     background: #0b0b0c;
-}
-
-// Spreadsheet dashboards. Odoo 20 draws them dark itself once the
-// `color_scheme` cookie says so (see `saturn_service.js`), by filtering every
-// figure it marks `os-theme-dependant`. Image figures are left out on purpose,
-// since a photo or logo must not be inverted, but on a sample dashboard (shown
-// until the database has data) the images are pre-rendered chart pictures, and
-// they stood out as white slabs. Give those the same filter as the live figures.
-.o_spreadsheet_dashboard_action .o-sample-dashboard .o-spreadsheet.dark .o-figure-wrapper:not(.os-theme-dependant) {
-    filter: var(--os-dark-mode-filter);
 }

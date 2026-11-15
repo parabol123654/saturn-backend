@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="saturn_backend.Island" owl="1">
+    <div class="island_host">
+    <div t-if="state.islandOpen" class="island o_wdl" t-att-scheme="scheme">
+        <div class="island_mask_layout" t-att-style="backgroundStyle">
+            <div class="island_content">
+                <div class="island_area">
+                    <!-- Apps / Workspace -->
+                    <div class="apps_switch top">
+                        <ul class="nav nav-segment" role="tablist">
+                            <li t-if="state.hasAction" class="nav-item island_close" role="presentation">
+                                <a class="nav-link" role="button" title="Back to the current view"
+                                   t-on-click="saturn.closeIsland()"><i class="ri-arrow-left-line"/> Close </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" role="tab"
+                                   t-att-class="{ active: state.islandTab === 'pick' }"
+                                   t-on-click="setTab('pick')"> Apps </a>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <a class="nav-link" role="tab"
+                                   t-att-class="{ active: state.islandTab === 'space' }"
+                                   t-on-click="setTab('space')"> Workspace </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- Pinned apps -->
+                    <!-- Bootstrap 4 declares `d-flex` after `d-none`, so the two
+                         cannot be combined the way they are on Bootstrap 5. -->
+                    <div class="flex-column rolkit"
+                         t-att-class="showPinned ? 'd-flex' : 'd-none'">
+                        <div class="apps_switch">
+                            <div class="island_fn mt-3 mb-2">
+                                <span class="fw-bold ms-2">Pinned</span>
+                                <ul class="nav nav-segment me-1" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <a class="nav-link active pe-1" role="tab"
+                                           t-on-click="setPane('all')"> All Apps <i class="ri-arrow-right-line text-dodger"/></a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="rolkit stb">
+                            <div class="rolkit island_apps" role="listbox" t-att-class="{ u_editing_pins: state.editingPins }">
+                                <t t-foreach="pinnedApps" t-as="app" t-key="app.id"><t t-call="saturn_backend.Island.AppSquare"/></t>
+                            </div>
+                            <p t-if="!pinnedApps.length" class="text-center opacity-50 mt-5">
+                                Nothing pinned yet — hover an app and use the star.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- All features -->
+                    <div class="flex-column rolkit"
+                         t-att-class="showAll ? 'd-flex' : 'd-none'">
+                        <div class="apps_switch">
+                            <div class="island_fn mt-3 mb-2">
+                                <span class="fw-bold ms-2">All Features</span>
+                                <div class="u_toolkit d-flex align-items-center gap-1">
+                                    <button class="btn btn-sm"
+                                            t-att-class="{ active: state.editingPins }"
+                                            title="Edit pinned apps"
+                                            t-on-click="saturn.toggleEditPins()">
+                                        <i class="ri-price-tag-3-line"/>
+                                    </button>
+                                    <ul class="nav nav-segment me-1" role="tablist" t-if="pinnedApps.length">
+                                        <li class="nav-item" role="presentation">
+                                            <a class="nav-link active ps-2" role="tab"
+                                               t-on-click="setPane('pinned')"><i class="ri-arrow-left-line text-dodger"/> Pinned </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="rolkit stb">
+                            <div class="rolkit island_all_apps" role="listbox" t-att-class="{ u_editing_pins: state.editingPins }">
+                                <t t-foreach="apps" t-as="app" t-key="app.id"><t t-call="saturn_backend.Island.AppSquare"/></t>
+                            </div>
+                            <div class="island_menu_results px-4" t-if="menuResults.length">
+                                <span class="island_menu_results_title text-uppercase fs-7 fw-sbold">Menus</span>
+                                <a t-foreach="menuResults" t-as="entry" t-key="entry.id"
+                                   class="island_menu_result d-flex align-items-center text-decoration-none"
+                                   t-att-href="entry.href"
+                                   t-on-click="onEntryClick(entry)">
+                                    <i class="ri-corner-down-right-line me-2 opacity-50"/>
+                                    <span t-esc="entry.name"/>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Workspace -->
+                    <div class="island_bookmarks rolkit"
+                         t-att-class="{ 'd-none': state.islandTab !== 'space' }">
+                        <div class="o_bookm_palette pt-3 px-4">
+                            <div class="o_command_category" t-foreach="bookmarkGroups" t-as="group" t-key="group.id">
+                                <div class="u_cate_wrap w-100">
+                                    <span class="fw-bold" t-esc="group.name"/>
+                                </div>
+                                <div class="o_bookm_grid">
+                                    <a t-foreach="group.bookmarks" t-as="bookmark" t-key="bookmark.href"
+                                       class="o_command d-flex align-items-center text-decoration-none"
+                                       t-att-href="bookmark.href"
+                                       t-on-click="onBookmarkOpen">
+                                        <img t-if="bookmarkImage(bookmark)" class="o_bookm_icon me-2"
+                                             t-att-src="bookmarkImage(bookmark)" alt=""/>
+                                        <i t-else="" t-att-class="bookmark.icon || 'ri-layout-grid-line'" class="me-2 opacity-75"/>
+                                        <span class="text-truncate" t-esc="bookmark.name"/>
+                                        <button class="btn btn-sm ms-auto o_bookm_remove"
+                                                title="Remove bookmark"
+                                                t-on-click="onBookmarkRemove(bookmark)">
+                                            <i class="ri-more-2-fill"/>
+                                        </button>
+                                    </a>
+                                </div>
+                            </div>
+                            <p t-if="!bookmarkGroups.length" class="text-center opacity-50 mt-5">
+                                Bookmark a view with the star in its control panel to see it here.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="island_search_bar d-flex align-items-center border-top mt-auto pt-2 mx-3">
+                        <div class="input-group rounded-3">
+                            <input t-ref="search" class="form-control border-0 p-0 ms-2"
+                                   placeholder="Type to search..." type="text" autocomplete="off"
+                                   t-att-value="state.search"
+                                   t-on-input="onSearchInput"
+                                   t-on-keydown="onSearchKeydown"/>
+                            <div class="input-group-append p-1 pe-2">
+                                <span><i class="fa fa-search"/></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+</t>
+
+<t t-name="saturn_backend.Island.AppSquare" owl="1">
+    <div class="u_app_square" draggable="false">
+        <a role="option" class="o_app d-block" draggable="false"
+           t-att-href="app.href"
+           t-att-data-menu-xmlid="app.xmlid"
+           t-on-click="onAppClick(app)">
+            <div class="u_app_icon_l2">
+                <div class="u_app_pin_btn position-absolute d-flex align-items-center justify-content-center rounded-circle cursor-pointer z-2"
+                     t-att-class="{ is_pinned: isAppPinned(app) }"
+                     t-att-title="isAppPinned(app) ? 'Unpin' : 'Pin to start'"
+                     t-on-click="onPinClick(app)">
+                    <i t-att-class="isAppPinned(app) ? 'fa fa-star' : 'fa fa-star-o'"/>
+                </div>
+                <div class="u_app_pin_btn u_app_bookm_btn position-absolute d-flex align-items-center justify-content-center rounded-circle cursor-pointer z-2"
+                     t-att-class="{ is_pinned: isAppBookmarked(app) }"
+                     t-att-title="isAppBookmarked(app) ? 'Remove from Workspace' : 'Add to Workspace'"
+                     t-on-click="onBookmarkClick(app)">
+                    <i t-att-class="isAppBookmarked(app) ? 'ri-bookmark-fill' : 'ri-bookmark-line'"/>
+                </div>
+                <div class="u_app_icon_l1">
+                    <img t-if="app.webIconData" class="u_app_icon" draggable="false" t-att-src="app.webIconData" alt=""/>
+                    <div t-else="" class="u_app_icon d-flex align-items-center justify-content-center">
+                        <i class="ri-apps-2-line"/>
+                    </div>
+                </div>
+            </div>
+            <div class="u_app_caption w-100 text-center text-truncate mt-2"
+                 t-att-title="app.name" t-esc="app.name"/>
+        </a>
+    </div>
+</t>
+
+</templates>

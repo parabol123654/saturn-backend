@@ -15,9 +15,8 @@
     // !important beats the inline width the resize handle writes, so the panel
     // and the shell padding can never drift apart.
     width: var(--uw-sidenav, 0px) !important;
-    // The panel is rendered from the main-components container, i.e. near the
-    // end of the body, so a fixed element without `top` would be laid out at
-    // its static offset and fall below the viewport.
+    // The panel is mounted at the end of the body, so a fixed element without
+    // `top` would be laid out at its static offset and fall below the viewport.
     top: 0;
     height: 100%;
     display: flex;
@@ -231,7 +230,7 @@
         }
 
         .btn {
-            font-size: 0.5125rem;
+            font-size: 8.2px;
             padding: 3px 8px;
             border-radius: $saturn-radius-sm;
             border: 1px solid $saturn-border;
@@ -252,9 +251,9 @@
         .u_recent_chip {
             background: saturn-alpha(text, 0.05);
             padding: 3px 7px;
-            font-size: 0.75rem;
+            font-size: 12px;
             color: saturn-alpha(text, 0.98);
-            border-radius: 0.5625rem;
+            border-radius: 9px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             max-width: 100%;
             user-select: none;
@@ -287,7 +286,7 @@
 
                 .nav-title {
                     margin-left: 10px;
-                    font-size: 0.805rem;
+                    font-size: 12.88px;
                 }
 
                 > .icon {
@@ -323,10 +322,10 @@
         }
 
         .sidenav_head {
-            margin-top: 1.2rem;
+            margin-top: 19.2px;
 
             .sidenav_hr {
-                margin-top: 1.2rem;
+                margin-top: 19.2px;
             }
 
             .navbar-brand {
@@ -391,6 +390,26 @@
             }
         }
     }
+}
+
+// Drag handle on the right edge. Odoo 14 has no resizable panel component, so
+// the sidebar brings its own.
+.o_sidenav .o_sidenav_resize_handle {
+    position: absolute;
+    top: 0;
+    right: -3px;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 3;
+
+    &:hover {
+        background: saturn-alpha(text, 0.12);
+    }
+}
+
+.o_sidenav.sm .o_sidenav_resize_handle {
+    display: none;
 }
 
 // Apps / Menu and Recent / Menu switches.

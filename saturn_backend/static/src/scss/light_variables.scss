@@ -1,57 +1,53 @@
 ///
 /// Light palette for the backend — Saturn Theme grays.
 ///
-/// Prepended to `web._assets_primary_variables`, so it lands before Odoo's own
-/// `primary_variables.scss` and its `!default` declarations never fire. That is
-/// the documented hook for a theme: it regrades the views themselves (lists,
-/// forms, sheets, dropdowns, modals) rather than painting over them.
+/// Appended to `web._assets_primary_variables`, i.e. right after Odoo's own
+/// `primary_variables.scss`. Odoo 14 declares most of its variables there
+/// without `!default`, so a file placed *before* it would simply be
+/// overwritten; placed after, a plain assignment wins, and everything declared
+/// later (`secondary_variables.scss`, `bootstrap_overridden.scss`, Bootstrap's
+/// own `_variables.scss`) is `!default` and derives from these values. That
+/// regrades the views themselves (lists, forms, sheets, dropdowns, modals)
+/// rather than painting over them.
 ///
-/// The counterpart of `dark_variables.scss`, and the same caveat applies: SCSS
-/// resolves at compile time, so this is bundle-wide rather than switchable at
-/// runtime the way the `--saturn-*` chrome tokens are.
-///
-/// Every value is `!default`, and that is load-bearing rather than habit.
-/// `web.assets_web_dark` includes `web.assets_web`, and that include runs
-/// *after* the dark bundle's own prepended `dark_variables.scss` — so plain
-/// assignments here would overwrite the dark palette with the light one, which
-/// is what rendered the primary button black on black. `!default` makes each
-/// line a no-op once the dark file has already claimed the variable, while
-/// still winning in the light bundle, where nothing has set it yet.
+/// The counterpart of `dark_variables.scss`, which the dark bundles load right
+/// after this file, so its assignments win there. SCSS resolves at compile
+/// time, so the palette is bundle-wide rather than switchable at runtime the
+/// way the `--saturn-*` chrome tokens are.
 ///
 
-// The brand's grays, in the nine steps Odoo interpolates the rest from. Anchors
-// are the official values: #E1E3E4 Light Gray, #C8C8C8 Rule (used here for
-// borders, which is what the guideline reserves it for), #3C3D3E Dark Gray for
-// body text, black and white at the ends.
-$o-gray-100: #f4f5f5 !default;
-$o-gray-200: #e1e3e4 !default;
-$o-gray-300: #c8c8c8 !default;
-$o-gray-400: #adafb0 !default;
-$o-gray-500: #8d8f90 !default;
-$o-gray-600: #6e7071 !default;
-$o-gray-700: #55565a !default;
-$o-gray-800: #3c3d3e !default;
-$o-gray-900: #1a1b1c !default;
+// The brand's grays, in the nine steps Bootstrap interpolates the rest from.
+// Anchors are the official values: #E1E3E4 Light Gray, #C8C8C8 Rule (used here
+// for borders, which is what the guideline reserves it for), #3C3D3E Dark Gray
+// for body text, black and white at the ends. Odoo 14 only has `$o-gray-100`
+// of its own; the other steps are Bootstrap's.
+$o-gray-100: #f4f5f5;
+$gray-200: #e1e3e4;
+$gray-300: #c8c8c8;
+$gray-400: #adafb0;
+$gray-500: #8d8f90;
+$gray-600: #6e7071;
+$gray-700: #55565a;
+$gray-800: #3c3d3e;
+$gray-900: #1a1b1c;
 
-// Dark Gray for body copy, Black for headings: the guideline's own split.
-$o-main-text-color: #3c3d3e !default;
-$o-main-headings-color: #000 !default;
+// Dark Gray for body copy.
+$o-main-text-color: #3c3d3e;
+$o-main-color-muted: #8d8f90;
+$headings-color: #000;
 
 // White page, so sheets read as the paper the brand designs on.
-$o-view-background-color: #fff !default;
+$o-view-background-color: #fff;
+$body-bg: #f4f5f5;
 
 // Black is the brand's "key statement" colour, so it is what a primary action
 // takes. This replaces Odoo's purple outright.
-$o-brand-primary: #000 !default;
-$o-brand-secondary: #e1e3e4 !default;
-$o-action: #3c3d3e !default;
+$o-brand-odoo: #3c3d3e;
+$o-brand-primary: #000;
+$o-brand-secondary: #e1e3e4;
+$o-brand-lightsecondary: #e1e3e4;
+$o-form-lightsecondary: #c8c8c8;
 
-// Links are Dark Gray rather than blue; Odoo underlines them, so they still
-// read as links without a hue.
-$o-main-link-color: #3c3d3e !default;
-
-// The selected row of a search panel. Odoo derives this from `$o-info`, so it
-// arrives as a pale sky blue — readable in light mode, but the one hue left in
-// an otherwise grayscale backend. Light Gray carries the same job.
-$o-list-group-active-bg: #e1e3e4 !default;
-$o-list-group-active-color: #000 !default;
+// Links are Dark Gray rather than the primary colour.
+$link-color: #3c3d3e;
+$link-hover-color: #000;

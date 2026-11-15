@@ -1,19 +1,12 @@
 // Web client shell: type, base surfaces and the room reserved for the sidebar.
 
 .o_web_client {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-        "Helvetica Neue", Ubuntu, "Noto Sans", Arial, "Odoo Unicode Support Noto", sans-serif;
-
     // The sidebar is fixed, so the shell indents itself by the exact width the
     // component publishes on :root.
     &:not(.o_website_navbar_hide):not(.o_in_studio):has(.o_sidenav) {
         padding-left: var(--uw-sidenav, 0px);
         overflow-x: hidden;
     }
-}
-
-.o_navbar {
-    --o-navbar-height: #{$saturn-navbar-height};
 }
 
 .o_main_navbar {
@@ -23,6 +16,12 @@
     border-bottom: 1px solid $saturn-border;
 }
 
+// Dragging the sidebar edge must not select text or lose the cursor.
+body.saturn-resizing {
+    cursor: col-resize;
+    user-select: none;
+}
+
 // The drawer covers the screen: hide what is behind it instead of unmounting
 // the action, so going back is instant.
 body.saturn-island-open {
@@ -30,8 +29,8 @@ body.saturn-island-open {
     padding-left: 0 !important;
 
     .o_sidenav,
-    .o_action_manager,
-    #oe_neutralize_banner {
+    .sidenav_2nd,
+    .o_action_manager {
         display: none !important;
     }
 
@@ -40,15 +39,25 @@ body.saturn-island-open {
         border-bottom-color: transparent;
     }
 
-    // The drawer covers the navbar, including the breadcrumbs; only the systray
-    // is lifted back above it so notifications and the user menu keep working.
-    .o_menu_systray {
+    // The drawer covers the navbar; only the systray is lifted back above it
+    // so notifications and the user menu keep working.
+    .o_main_navbar {
         position: relative;
-        background: transparent;
         z-index: 1001;
+        // The bar itself must not swallow clicks meant for the drawer's tabs,
+        // which sit underneath its left half.
+        pointer-events: none;
     }
 
-    #island_toggler {
+    .o_menu_systray {
+        pointer-events: auto;
+        background: transparent;
+    }
+
+    // Neither the toggle nor the small-screen logo belongs on top of the
+    // drawer's own tabs.
+    #island_toggler,
+    .u_navbar_logo {
         display: none !important;
     }
 }
@@ -106,7 +115,29 @@ body.saturn-island-open {
 }
 
 // Bookmark toggle added to every control panel.
+.o_control_panel .o_cp_top_left {
+    display: flex;
+    align-items: center;
+
+    // The crumbs are capped at 90% of the list's width, which is circular
+    // once the list is sized by its content: the title would truncate itself.
+    > .breadcrumb {
+        flex: 0 1 auto;
+        min-width: 0;
+
+        > li {
+            max-width: 100%;
+        }
+    }
+}
+
 .o_saturn_bookmark {
+    flex: 0 0 auto;
+    margin-left: 6px;
+    padding: 0 4px;
+    font-size: 15px;
+    line-height: 1;
+    box-shadow: none !important;
     color: saturn-alpha(text, 0.45);
     text-decoration: none;
 
@@ -123,10 +154,9 @@ body.saturn-island-open {
 // two-up at the `lg` breakpoint whatever is actually left over. Odoo ships no
 // side navigation, so that assumption holds for it — but here the sidebar has
 // already taken its share, and on a 1000px window with the sidebar dragged wide
-// the two columns come out ~190px each. The monetary inputs keep their fixed
-// width and spill out of the box (the Lunch "Overdraft" field is the clearest
-// case). A container query asks the question Odoo meant to ask: how much room
-// does this container have, rather than how wide is the screen.
+// the two columns come out ~190px each. A container query asks the question
+// Odoo meant to ask: how much room does this container have, rather than how
+// wide is the screen.
 .o_settings_container {
     container-type: inline-size;
     container-name: saturnsettings;
@@ -137,78 +167,4 @@ body.saturn-island-open {
         flex: 0 0 100%;
         max-width: 100%;
     }
-}
-
-// Discuss has the same blind spot, and worse consequences: its own sidebar and
-// the member list are both fixed-width, so once the side navigation has taken
-// its share there can be nothing left for the thread. On a 960px window with
-// the sidebar dragged wide, 300px of channel list plus 251px of member list
-// leave the messages a 32px column — one character per line.
-//
-// The container goes on `.o_action_manager` rather than on `.o-mail-Discuss`
-// itself: it is a plain block wrapper, so `inline-size` containment cannot
-// disturb the flex layout inside, and its width is exactly the room the action
-// has been given.
-.o_action_manager {
-    container-type: inline-size;
-    container-name: saturnmain;
-}
-
-@container saturnmain (max-width: 900px) {
-    // Drop the optional panel first. Its toggle goes with it, because a button
-    // that cannot show its panel is worse than one that is not offered.
-    .o-discuss-ChannelMemberList,
-    .o-mail-Discuss .o-mail-ActionList-button:has(.oi-users) {
-        display: none;
-    }
-}
-
-@container saturnmain (max-width: 620px) {
-    .o-mail-DiscussSidebar {
-        max-width: 220px;
-    }
-}
-
-// Ticked list rows. `ListRenderer.getRowClass` hardcodes Bootstrap's
-// `table-info` on any selected record, and that variant is generated by
-// `shift-color($info, -80%)` — a tint towards white, computed once for a light
-// page and never reconsidered by `web.assets_web_dark`. The row therefore
-// arrives as #d1ecf1 with black text whatever the scheme: the one hue left in
-// an otherwise grayscale backend in light mode, and a slab of pale cyan on
-// black in dark mode.
-//
-// The same answer the search panel already gets, for the same reason: a brand
-// gray reads as a selection without introducing a colour. It is written as an
-// override of Bootstrap's own row variables rather than a `background` rule,
-// because the cell paints itself through `--table-bg` *and* an inset
-// `box-shadow` fed by `--table-bg-state`; setting the variables lets hover and
-// striping keep working instead of being overpainted.
-.o_list_renderer .o_data_row.o_data_row_selected {
-    --table-color: var(--saturn-row-selected-color);
-    --table-bg: var(--saturn-row-selected-bg);
-    --table-border-color: var(--saturn-border);
-    --table-striped-color: var(--saturn-row-selected-color);
-    --table-striped-bg: var(--saturn-row-selected-bg);
-    --table-active-color: var(--saturn-row-selected-color);
-    --table-active-bg: var(--saturn-row-selected-bg);
-    --table-hover-color: var(--saturn-row-selected-color);
-    --table-hover-bg: var(--saturn-row-selected-hover-bg);
-}
-
-// "Select all N" in the list selection box. Odoo paints it `btn-info`, the same
-// sky blue as the ticked rows used to be. It is the one action inside that box,
-// so it takes the accent pair: Black on light, White on dark, which is what the
-// brand gives an active element. Odoo 18 names it `o_list_select_domain`, 19
-// and 20 `o_select_domain`.
-.o_list_select_domain,
-.o_select_domain {
-    --btn-color: var(--saturn-on-accent);
-    --btn-bg: var(--saturn-accent);
-    --btn-border-color: var(--saturn-accent);
-    --btn-hover-color: var(--saturn-on-accent);
-    --btn-hover-bg: var(--saturn-text);
-    --btn-hover-border-color: var(--saturn-text);
-    --btn-active-color: var(--saturn-on-accent);
-    --btn-active-bg: var(--saturn-text);
-    --btn-active-border-color: var(--saturn-text);
 }

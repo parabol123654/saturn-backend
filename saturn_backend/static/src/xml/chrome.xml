@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<!-- Systray colour scheme toggle (legacy widget). -->
+<t t-name="saturn_backend.SchemeSwitch">
+    <li class="o_saturn_scheme_switch">
+        <a href="#" role="button" class="o_nav_entry" title="Switch Scheme">
+            <i class="ri-contrast-2-line ri-lg"/>
+        </a>
+    </li>
+</t>
+
+<!-- Bookmark toggle next to the breadcrumbs of every action's control panel. -->
+<t t-inherit="web.ControlPanel" t-inherit-mode="extension" owl="1">
+    <xpath expr="//div[@class='o_cp_top_left']" position="inside">
+        <button t-if="props.withBreadcrumbs" type="button"
+                class="btn btn-link o_saturn_bookmark px-1 d-print-none"
+                t-att-class="{ on: saturnIsBookmarked }"
+                t-att-title="saturnIsBookmarked ? 'Remove from workspace' : 'Add to workspace'"
+                t-on-click="toggleSaturnBookmark">
+            <i t-att-class="saturnIsBookmarked ? 'ri-bookmark-fill' : 'ri-bookmark-line'"/>
+        </button>
+    </xpath>
+</t>
+
+</templates>

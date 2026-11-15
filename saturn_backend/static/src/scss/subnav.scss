@@ -1,14 +1,21 @@
-// Hover flyout: the app's menu tree in cards that wrap into columns. The panel
-// itself is a stock Odoo popover, so only its contents are styled here.
+// Hover flyout: the app's menu tree in cards that wrap into columns. Odoo 14
+// has no popover service, so the panel is the module's own fixed box, placed by
+// the sidebar next to the hovered row.
 
 .sidenav_2nd {
-    --o-navbar-height: #{$saturn-navbar-height};
+    position: fixed;
+    z-index: 1040;
+    background: $saturn-bg;
+    color: $saturn-text;
+    border: 1px solid $saturn-border;
+    border-radius: $saturn-radius;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
 
     .subnav_wrapper {
         --dropdown-link-hover-color: #fff;
         --dropdown-link-hover-bg: #{$saturn-bg};
         --dropdown-header-padding-x: 20px;
-        --dropdown-header-padding-y: 0.5rem;
+        --dropdown-header-padding-y: 8px;
         padding: 12px;
         max-height: 719px;
         gap: 10px;
@@ -65,7 +72,7 @@
     // Header of a nested menu group inside a section.
     .dropdown-menu_group {
         padding: 2px 15px;
-        font-size: 0.75rem;
+        font-size: 12px;
         font-weight: 500;
         color: saturn-alpha(text, 0.55);
     }
@@ -76,7 +83,7 @@
         padding: 3px 15px;
         margin-bottom: 1px;
         border-radius: $saturn-radius-sm;
-        font-size: 0.83125rem;
+        font-size: 13.3px;
         color: $saturn-text;
         text-decoration: none;
 
