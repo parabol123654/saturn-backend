@@ -18,7 +18,7 @@ The Saturn backend experience for Odoo 15:
     "version": "15.0.1.0.0",
     "category": "Themes/Backend",
     "author": "Manh Nguyen",
-    "license": "AGPL-3",
+    "license": "LGPL-3",
     "website": "https://github.com/parabol123654/saturn-backend",
     "support": "parabol123654@gmail.com",
     "images": ["static/description/banner.png"],
