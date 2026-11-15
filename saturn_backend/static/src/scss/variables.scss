@@ -1,14 +1,14 @@
 // Metrics are scheme independent, so they stay plain SCSS.
 $saturn-navbar-height: 46px;
 $saturn-sidenav-collapsed: 56px;
-$saturn-radius: 0.5rem;
-$saturn-radius-lg: 0.8125rem;
-$saturn-radius-sm: 0.4375rem;
+$saturn-radius: 8px;
+$saturn-radius-lg: 13px;
+$saturn-radius-sm: 7px;
 
 // Chrome colours are CSS custom properties rather than SCSS literals, because
 // the light/dark switch has to work at runtime: this file ships the light set
 // in the shared backend bundle and `dark_chrome.scss` overrides it inside
-// `web.assets_web_dark`. Hardcoding them here is what made the sidebar stay
+// the module's dark bundle. Hardcoding them here is what made the sidebar stay
 // dark after switching to light.
 //
 // The values are the Saturn Theme palette: White #FFFFFF, Light Gray #E1E3E4,
@@ -84,8 +84,8 @@ $saturn-accent-soft: saturn-alpha(accent, 0.098);
 // Odoo's own values so the module also styles correctly on a stripped bundle
 // and never changes them where Odoo does define them.
 .fs-7 {
-    // 0.77 x the 0.875rem body size == 10.78px on a 16px root.
-    font-size: 0.67375rem;
+    // 0.77 x the 14px body size == 10.78px on a 16px root.
+    font-size: 10.78px;
 }
 
 .fw-sbold {

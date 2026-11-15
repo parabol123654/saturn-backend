@@ -1,19 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-<t t-name="saturn_backend.Sidenav">
-    <ResizablePanel t-if="this.visible"
-                    class="this.panelClass"
-                    handleSide="'end'"
-                    initialWidth="this.state.width"
-                    minWidth="this.saturn.MIN_WIDTH"
-                    onResize="(width) => this.onResize(width)">
+<t t-name="saturn_backend.Sidenav" owl="1">
+    <div class="o_sidenav" t-att-class="{ sm: state.collapsed, 'd-none': !visible }">
+        <!-- Odoo 15 has no resizable panel, so the edge is a handle of our own. -->
+        <div class="o_sidenav_resize_handle" t-on-mousedown="onResizeStart"/>
 
         <!-- Brand -->
         <div class="sidenav_head">
-            <a class="d-flex navbar-brand m-0" href="/odoo">
-                <img t-if="!this.state.collapsed" class="navbar-fogo" t-att-src="this.saturn.logoUrl" alt=""/>
-                <img t-else="" class="navbar-mogo" t-att-src="this.saturn.logoMiniUrl" alt=""/>
+            <a class="d-flex navbar-brand m-0" href="/web">
+                <img t-if="!state.collapsed" class="navbar-fogo" t-att-src="saturn.logoUrl" alt=""/>
+                <img t-else="" class="navbar-mogo" t-att-src="saturn.logoMiniUrl" alt=""/>
             </a>
             <span class="sidenav_hr d-block w-100"/>
         </div>
@@ -24,25 +21,25 @@
             <div class="sidenav_topa d-flex flex-shrink-0 flex-wrap w-100 mx-auto gap-1 align-items-center justify-content-end rounded-2 py-2 my-2">
                 <button class="btn sn_expand ms-1 px-2 py-1 lh-1"
                         title="Switch Sidebar Mode"
-                        t-on-click="() => this.saturn.toggleCollapsed()">
+                        t-on-click="onToggleCollapsed">
                     <i class="ri-layout-left-line"/>
                 </button>
                 <button class="ms-auto btn px-2 py-1 lh-1 nav-xmini"
                         title="Switch Scheme"
-                        t-on-click="() => this.saturn.switchColorScheme()">
+                        t-on-click="onSwitchScheme">
                     <i class="ri-contrast-2-line"/>
                 </button>
-                <button class="btn px-2 py-1 lh-1" title="Activity Hub" t-on-click="this.openActivityHub">
+                <button class="btn px-2 py-1 lh-1" title="Activity Hub" t-on-click="openActivityHub">
                     <i class="ri-checkbox-circle-line"/>
                 </button>
                 <button class="btn px-2 py-1 lh-1 nav-xmini"
                         title="Workspace"
-                        t-on-click="() => this.saturn.toggleIsland('space')">
+                        t-on-click="onWorkspaceClick">
                     <i class="ri-square-line"/>
                 </button>
                 <button class="btn px-2 py-1 lh-1 nav-xmini"
                         title="Commands (Ctrl+K)"
-                        t-on-click="this.openCommandPalette">
+                        t-on-click="openCommandPalette">
                     <i class="ri-terminal-box-line"/>
                 </button>
             </div>
@@ -53,45 +50,45 @@
             <div class="d-flex align-items-center justify-content-between">
                 <h6 class="fs-7 fw-sbold ms-2 sidenav_subt text-uppercase mb-0 u_nav_mode_sw user-select-none">
                     <span class="u_nav_mode"
-                          t-att-class="{ on: this.state.navMode === 'apps' }"
+                          t-att-class="{ on: state.navMode === 'apps' }"
                           role="button"
                           title="All apps and pinned shortcuts"
-                          t-on-click="() => this.saturn.backToApps()">Apps</span>
+                          t-on-click="onBackToApps">Apps</span>
                     <span class="u_nav_mode_sep">/</span>
                     <span class="u_nav_mode pe-5"
-                          t-att-class="{ on: this.state.navMode === 'menu', u_disabled: !this.saturn.navApp }"
+                          t-att-class="{ on: state.navMode === 'menu', u_disabled: !saturn.navApp }"
                           role="button"
                           title="Current app workspace"
-                          t-on-click="() => this.saturn.setNavMode('menu')">Menu</span>
+                          t-on-click="onMenuMode">Menu</span>
                 </h6>
-                <button data-hotkey="z" type="button"
+                <button type="button"
                         class="btn btn-om border-transparent d-flex om-mask om-mask-blob sidenav_subt p-1"
                         title="Search a menu"
-                        t-on-click="this.openCommandPalette">
+                        t-on-click="openCommandPalette">
                     <i class="ri-search-2-line"/>
                 </button>
             </div>
         </div>
 
         <!-- Navigation body -->
-        <div class="sidenav_cont d-flex flex-column mt-2 rolvis" t-on-mouseleave="this.onSidenavLeave">
+        <div class="sidenav_cont d-flex flex-column mt-2 rolvis" t-on-mouseleave="onSidenavLeave">
             <!-- Apps mode -->
-            <t t-if="this.state.navMode === 'apps'">
-                <div class="nav-item" t-foreach="this.apps" t-as="app" t-key="app.id">
-                    <a class="o-dropdown-item dropdown-item o-navigable nav-link"
-                       t-att-class="{ on: this.isCurrentApp(app) }"
-                       t-att-href="app.href || '#'"
+            <t t-if="state.navMode === 'apps'">
+                <div class="nav-item" t-foreach="apps" t-as="app" t-key="app.id">
+                    <a class="nav-link"
+                       t-att-class="{ on: isCurrentApp(app) }"
+                       t-att-href="saturn.menuHref(app)"
                        t-att-data-menu-xmlid="app.xmlid"
-                       t-on-mouseenter="(ev) => this.onAppHover(app, ev)"
-                       t-on-click="(ev) => this.onAppClick(app, ev)">
+                       t-on-mouseenter="onAppHover(app)"
+                       t-on-click="onAppClick(app)">
                         <div class="icon text-center d-flex align-items-center justify-content-center pe-none">
-                            <img t-if="app.webIconData" t-att-src="app.webIconData" alt=""/>
-                            <i t-else="" t-att-class="this.iconClass(app)"/>
+                            <img t-if="saturn.iconSrc(app)" t-att-src="saturn.iconSrc(app)" alt=""/>
+                            <i t-else="" class="ri-apps-2-line"/>
                         </div>
-                        <span class="nav-title text-truncate pe-none" t-att-title="app.name" t-out="app.name"/>
+                        <span class="nav-title text-truncate pe-none" t-att-title="app.name" t-esc="app.name"/>
                         <div role="button" class="d-flex align-items-center nav-arrow"
                              title="Open app menu"
-                             t-on-click="(ev) => this.onAppDrill(app, ev)">
+                             t-on-click="onAppDrill(app)">
                             <span class="d-flex align-self-stretch align-items-center lh-1"/>
                         </div>
                     </a>
@@ -100,22 +97,22 @@
 
             <!-- Menu mode -->
             <t t-else="">
-                <div class="nav-item cockpit_head my-1 user-select-none" t-if="this.saturn.navApp">
+                <div class="nav-item cockpit_head my-1 user-select-none" t-if="saturn.navApp">
                     <div class="nav-link on" role="button" title="Pick another app"
-                         t-on-click="() => this.saturn.backToApps()">
+                         t-on-click="onBackToApps">
                         <div class="icon text-center d-flex align-items-center justify-content-center pe-none">
-                            <img t-if="this.saturn.navApp.webIconData" t-att-src="this.saturn.navApp.webIconData" alt=""/>
-                            <i t-else="" t-att-class="this.iconClass(this.saturn.navApp)"/>
+                            <img t-if="saturn.iconSrc(saturn.navApp)" t-att-src="saturn.iconSrc(saturn.navApp)" alt=""/>
+                            <i t-else="" class="ri-apps-2-line"/>
                         </div>
-                        <span class="nav-title text-truncate pe-none" t-att-title="this.saturn.navApp.name" t-out="this.saturn.navApp.name"/>
+                        <span class="nav-title text-truncate pe-none" t-att-title="saturn.navApp.name" t-esc="saturn.navApp.name"/>
                         <div role="button" class="d-flex align-items-center nav-arrow nav-arrow-back" title="Switch app">
                             <span class="d-flex align-self-stretch align-items-center lh-1"/>
                         </div>
                     </div>
                 </div>
 
-                <t t-foreach="this.sections" t-as="section" t-key="section.id">
-                    <t t-call="saturn_backend.MenuSection" section="section" sectionClass="'cockpit_sect'"/>
+                <t t-foreach="sections" t-as="section" t-key="section.id">
+                    <t t-call="saturn_backend.MenuSection"><t t-set="sectionClass" t-value="'cockpit_sect'"/></t>
                 </t>
             </t>
         </div>
@@ -126,51 +123,51 @@
             <div class="d-flex flex-row align-items-center">
                 <h6 class="fs-7 fw-sbold ms-2 sidenav_subt text-uppercase mb-0 me-auto u_nav_mode_sw user-select-none">
                     <span class="u_nav_mode"
-                          t-att-class="{ on: this.state.footMode === 'recent' }"
+                          t-att-class="{ on: state.footMode === 'recent' }"
                           role="button" title="Recently opened records"
-                          t-on-click="() => this.saturn.setFootMode('recent')">Recent</span>
+                          t-on-click="setFootMode('recent')">Recent</span>
                     <span class="u_nav_mode_sep">/</span>
                     <span class="u_nav_mode pe-4"
-                          t-att-class="{ on: this.state.footMode === 'menu' }"
+                          t-att-class="{ on: state.footMode === 'menu' }"
                           role="button" title="Pinned apps"
-                          t-on-click="() => this.saturn.setFootMode('menu')">Menu</span>
+                          t-on-click="setFootMode('menu')">Menu</span>
                 </h6>
-                <span class="btn btn-sm border-secondary text-reset fw-sbold lh-1 me-1"
+                <span class="btn btn-sm text-reset fw-sbold lh-1 me-1"
                       title="Clear the list"
-                      t-on-click="() => this.saturn.clearRecents()"
-                      t-out="this.recents.length"/>
+                      t-on-click="onClearRecents"
+                      t-esc="recents.length"/>
             </div>
         </div>
 
-        <div class="sidenav_foot flex-column rolkit" t-att-class="{ 'd-none': this.state.collapsed }">
-            <t t-if="this.state.footMode === 'recent'">
+        <div class="sidenav_foot flex-column rolkit" t-att-class="{ 'd-none': state.collapsed }">
+            <t t-if="state.footMode === 'recent'">
                 <div class="u_horizon_recents d-flex flex-wrap pb-2 px-2">
-                    <a t-foreach="this.recents" t-as="recent" t-key="recent.href"
+                    <a t-foreach="recents" t-as="recent" t-key="recent.href"
                        class="u_recent_chip text-truncate text-decoration-none"
                        t-att-href="recent.href">
-                        <span t-out="recent.name"/>
+                        <span t-esc="recent.name"/>
                     </a>
                 </div>
             </t>
             <t t-else="">
                 <div class="u_foot_apps px-2 pb-2">
-                    <a t-foreach="this.saturn.pinnedApps" t-as="app" t-key="app.id"
+                    <a t-foreach="saturn.pinnedApps" t-as="app" t-key="app.id"
                        class="nav-link d-flex align-items-center text-decoration-none"
-                       t-att-href="app.href || '#'"
-                       t-on-click="(ev) => this.onAppClick(app, ev)">
+                       t-att-href="saturn.menuHref(app)"
+                       t-on-click="onAppClick(app)">
                         <div class="icon d-flex align-items-center justify-content-center pe-none">
-                            <img t-if="app.webIconData" t-att-src="app.webIconData" alt=""/>
-                            <i t-else="" t-att-class="this.iconClass(app)"/>
+                            <img t-if="saturn.iconSrc(app)" t-att-src="saturn.iconSrc(app)" alt=""/>
+                            <i t-else="" class="ri-apps-2-line"/>
                         </div>
-                        <span class="nav-title text-truncate pe-none" t-out="app.name"/>
+                        <span class="nav-title text-truncate pe-none" t-esc="app.name"/>
                     </a>
-                    <div t-if="!this.saturn.pinnedApps.length" class="u_recent_chip mx-2 text-truncate">
+                    <div t-if="!saturn.pinnedApps.length" class="u_recent_chip mx-2 text-truncate">
                         <span>Pin apps from the drawer</span>
                     </div>
                 </div>
             </t>
         </div>
-    </ResizablePanel>
+    </div>
 </t>
 
 </templates>

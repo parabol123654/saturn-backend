@@ -1,14 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-<t t-name="saturn_backend.ControlPanel" t-inherit="web.ControlPanel" t-inherit-mode="extension">
-    <xpath expr="//div[hasclass('o_control_panel_breadcrumbs')]" position="inside">
-        <button class="btn btn-link o_saturn_bookmark px-1 d-print-none"
-                t-att-class="{ on: this.saturnIsBookmarked }"
-                t-att-title="this.saturnIsBookmarked ? 'Remove from workspace' : 'Add to workspace'"
-                t-on-click="this.toggleSaturnBookmark">
-            <i t-att-class="this.saturnIsBookmarked ? 'ri-bookmark-fill' : 'ri-bookmark-line'"/>
-        </button>
+<t t-name="saturn_backend.Bookmark" owl="1">
+    <button type="button" class="btn btn-link o_saturn_bookmark px-1 d-print-none"
+            t-att-class="{ on: isBookmarked }"
+            t-att-title="isBookmarked ? 'Remove from workspace' : 'Add to workspace'"
+            t-on-click="onClick">
+        <i t-att-class="isBookmarked ? 'ri-bookmark-fill' : 'ri-bookmark-line'"/>
+    </button>
+</t>
+
+<!--
+    The button is the last item of the breadcrumb list itself, so it follows
+    the title instead of being pushed to the far end of the control panel.
+-->
+
+<!-- Legacy control panel: list, kanban, form and the other legacy views. -->
+<t t-name="saturn_backend.Legacy.ControlPanel" t-inherit="web.Legacy.ControlPanel" t-inherit-mode="extension" owl="1">
+    <xpath expr="//ol[@class='breadcrumb']" position="inside">
+        <li class="o_saturn_bookmark_item"><SaturnBookmark/></li>
+    </xpath>
+</t>
+
+<!-- New control panel: graph and pivot. -->
+<t t-name="saturn_backend.Breadcrumbs" t-inherit="web.Breadcrumbs" t-inherit-mode="extension" owl="1">
+    <xpath expr="//ol[@class='breadcrumb']" position="inside">
+        <li class="o_saturn_bookmark_item"><SaturnBookmark/></li>
     </xpath>
 </t>
 

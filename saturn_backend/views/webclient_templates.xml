@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Odoo 15 has no colour scheme: the web client always links the same two
+        stylesheets. The dark scheme is a second compilation of those bundles
+        with the Saturn dark palette prepended (see the manifest), so the only
+        thing to do here is link the pair the user asked for. Scripts are left
+        alone: both schemes run the same code.
+    -->
+    <template id="webclient_bootstrap" inherit_id="web.webclient_bootstrap" name="Saturn Backend: colour scheme">
+        <xpath expr="//t[@t-call-assets='web.assets_common'][@t-js='false']" position="replace">
+            <t t-set="saturn_scheme" t-value="request.env['ir.http'].saturn_color_scheme()"/>
+            <t t-if="saturn_scheme == 'dark'" t-call-assets="saturn_backend.assets_common_dark" t-js="false"/>
+            <t t-else="" t-call-assets="web.assets_common" t-js="false"/>
+        </xpath>
+        <xpath expr="//t[@t-call-assets='web.assets_backend'][@t-js='false']" position="replace">
+            <t t-if="saturn_scheme == 'dark'" t-call-assets="saturn_backend.assets_backend_dark" t-js="false"/>
+            <t t-else="" t-call-assets="web.assets_backend" t-js="false"/>
+        </xpath>
+    </template>
+
+</odoo>

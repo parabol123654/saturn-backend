@@ -1,7 +1,9 @@
-import { Component } from "@odoo/owl";
-import { useService } from "@web/core/utils/hooks";
-import { browser } from "@web/core/browser/browser";
+/** @odoo-module **/
+
 import { sectionIcon } from "@saturn_backend/core/section_icons";
+import { useSaturn } from "@saturn_backend/core/saturn_service";
+
+const { Component } = owl;
 
 /**
  * Shared behaviour for the two places that render an app's menu tree: the
@@ -9,16 +11,12 @@ import { sectionIcon } from "@saturn_backend/core/section_icons";
  */
 export class MenuTree extends Component {
     setup() {
-        this.saturn = useService("saturn");
-        this.menuService = useService("menu");
+        this.saturn = useSaturn();
+        this.state = this.saturn.state;
     }
 
     sectionIcon(name) {
         return sectionIcon(name);
-    }
-
-    iconClass(app) {
-        return app?.webIcon?.iconClass || "ri-apps-2-line";
     }
 
     /**
@@ -29,7 +27,7 @@ export class MenuTree extends Component {
         const rows = [];
         const walk = (nodes) => {
             for (const node of nodes) {
-                if (node.childrenTree?.length) {
+                if (node.childrenTree && node.childrenTree.length) {
                     rows.push({ type: "group", id: `g-${node.id}`, name: node.name });
                     walk(node.childrenTree);
                 } else {
@@ -41,19 +39,21 @@ export class MenuTree extends Component {
         return rows;
     }
 
+    /** Odoo 15 menus have no address of their own, so match on the action. */
     isCurrentEntry(entry) {
-        const href = entry?.href || "";
-        if (!href || href === "#") {
-            return false;
-        }
-        return browser.location.pathname === href.split("?")[0];
+        return !!(entry && entry.actionID && entry.actionID === this.saturn.currentActionId);
+    }
+
+    onSectionToggle(section) {
+        this.saturn.toggleSection(section.id);
     }
 
     onEntryClick(entry, ev) {
         ev.preventDefault();
-        this.menuService.selectMenu(entry);
-        // Owl 3 only defines `this.props` through `useProps`, and the sidebar
-        // declares none.
-        this.props?.close?.();
+        this.saturn.selectMenu(entry);
+        this.afterEntryClick();
     }
+
+    /** Hook for the flyout, which dismisses itself once an entry is picked. */
+    afterEntryClick() {}
 }

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-<t t-name="saturn_backend.NavBar" t-inherit="web.NavBar" t-inherit-mode="extension">
+<t t-name="saturn_backend.NavBar" t-inherit="web.NavBar" t-inherit-mode="extension" owl="1">
     <xpath expr="//t[@t-call='web.NavBar.AppsMenu']" position="before">
-        <div class="d-flex align-items-center">
-            <button id="island_toggler" class="btn d-flex px-1" accesskey="h"
-                    data-hotkey="h" title="Main Menu" t-on-click="this.onSaturnToggle">
+        <div class="u_navbar_start d-flex align-items-center">
+            <button id="island_toggler" class="btn d-flex px-1"
+                    data-hotkey="h" title="Main Menu" t-on-click="onSaturnToggle">
                 <i class="ri-apps-2-line"/>
             </button>
-            <a t-if="this.ui.isSmall" class="u_navbar_logo d-flex align-items-center" href="/odoo">
-                <img t-att-src="this.saturn.logoMiniUrl" alt=""/>
+            <a t-if="env.isSmall" class="u_navbar_logo d-flex align-items-center" href="/web">
+                <img t-att-src="saturn.logoMiniUrl" alt=""/>
             </a>
         </div>
     </xpath>

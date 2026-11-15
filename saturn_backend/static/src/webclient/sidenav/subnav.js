@@ -1,4 +1,5 @@
-import { t, useProps } from "@odoo/owl";
+/** @odoo-module **/
+
 import { MenuTree } from "@saturn_backend/webclient/sidenav/menu_tree";
 
 /**
@@ -7,21 +8,38 @@ import { MenuTree } from "@saturn_backend/webclient/sidenav/menu_tree";
  * flexbox rather than a grid.
  */
 export class SaturnSubnav extends MenuTree {
-    static template = "saturn_backend.Subnav";
-
-    props = useProps({
-        app: t.object(),
-        close: t.function().optional(),
-        onMouseEnter: t.function().optional(),
-        onMouseLeave: t.function().optional(),
-    });
-
-    setup() {
-        super.setup();
-        this.state = this.saturn.state;
-    }
-
     get sections() {
         return this.saturn.sectionsOf(this.props.app);
     }
+
+    get wrapperStyle() {
+        const max = this.props.maxHeight;
+        return max ? `max-height: min(719px, ${max}px)` : "";
+    }
+
+    onMouseEnter() {
+        if (this.props.onMouseEnter) {
+            this.props.onMouseEnter();
+        }
+    }
+
+    onMouseLeave() {
+        if (this.props.onMouseLeave) {
+            this.props.onMouseLeave();
+        }
+    }
+
+    afterEntryClick() {
+        if (this.props.close) {
+            this.props.close();
+        }
+    }
 }
+SaturnSubnav.template = "saturn_backend.Subnav";
+SaturnSubnav.props = {
+    app: Object,
+    close: { type: Function, optional: true },
+    onMouseEnter: { type: Function, optional: true },
+    onMouseLeave: { type: Function, optional: true },
+    maxHeight: { type: Number, optional: true },
+};

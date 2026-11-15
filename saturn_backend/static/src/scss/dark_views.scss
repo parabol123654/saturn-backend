@@ -1,0 +1,243 @@
+///
+/// Dark corrections for the views.
+///
+/// `dark_variables.scss` regrades everything Odoo 15 derives from its SCSS
+/// variables. What is left are the surfaces its stylesheets paint with a
+/// literal `white` or a fixed light gray, which no variable can reach, and the
+/// few places where Odoo uses the dark end of the gray ramp as a *surface*
+/// (inverted, that end is white). They are corrected here, in the dark bundle
+/// only. Values are the same brand grays as the palette.
+///
+
+$sd-body: #0b0b0c;
+$sd-sunken: #161718;
+$sd-view: #1c1d1e;
+$sd-raised: #2a2b2c;
+$sd-border: #3c3d3e;
+$sd-text: #e1e3e4;
+$sd-muted: #c8c8c8;
+
+// -- Form ---------------------------------------------------------------------
+.o_form_view {
+    .o_form_sheet_bg {
+        // Odoo tiles a light paper texture behind the sheet.
+        background: $sd-body;
+        border-bottom-color: $sd-border;
+
+        > .o_form_sheet {
+            background: $sd-view;
+            border-color: $sd-border;
+            box-shadow: none;
+        }
+    }
+
+    .oe_button_box .oe_stat_button:hover {
+        background-color: $sd-raised;
+    }
+
+    .o_group {
+        .o_td_label,
+        .o_checkbox_optional_field > .o_form_label {
+            border-right-color: $sd-border;
+        }
+    }
+}
+
+// Required inputs are flagged with a fixed lavender fill; black text on it is
+// readable, but it punches a pastel block through a dark sheet.
+.o_required_modifier {
+    &.o_input,
+    .o_input {
+        background-color: #2f2f45 !important;
+    }
+}
+
+.o_input,
+select.o_input {
+    background-color: transparent;
+    color: $sd-text;
+}
+
+select.o_input option {
+    background-color: $sd-view;
+    color: $sd-text;
+}
+
+.o_field_many2one_avatar .o_m2o_avatar_empty,
+.o_field_many2manytags .o_m2m_avatar_empty {
+    background-color: $sd-raised;
+}
+
+// -- List ---------------------------------------------------------------------
+.o_list_view {
+    thead {
+        background-color: $sd-sunken;
+    }
+
+    tbody > tr.o_group_header {
+        background-image: none;
+        background-color: $sd-raised;
+
+        &:focus-within {
+            background-image: none;
+            background-color: $sd-border;
+        }
+    }
+
+    .o_list_table .o_data_row.o_selected_row > .o_data_cell:not(.o_readonly_modifier):not(.o_invisible_modifier):not(.o_handle_cell) {
+        background-color: $sd-body;
+    }
+
+    .o_list_table thead th.o_column_sortable:not(:first-child),
+    .o_list_table thead th:not(:first-child) {
+        border-left-color: $sd-border;
+    }
+}
+
+// -- Kanban -------------------------------------------------------------------
+.o_kanban_view .o_kanban_record {
+    .o_kanban_image_fill_left,
+    .o_kanban_image {
+        .o_kanban_image_inner_pic {
+            background: $sd-view;
+            box-shadow: -1px -1px 0 1px $sd-view;
+        }
+    }
+}
+
+// -- Search -------------------------------------------------------------------
+.o_searchview {
+    background-color: $sd-body;
+    border-color: $sd-border;
+
+    .o_searchview_input {
+        background-color: transparent;
+        color: $sd-text;
+    }
+}
+
+.o_search_panel {
+    background-color: $sd-sunken;
+}
+
+.o_view_nocontent .o_nocontent_help {
+    background-color: $sd-body;
+    box-shadow: 0 0 120px 100px $sd-body;
+}
+
+// -- Settings -----------------------------------------------------------------
+// The tab rail is painted with the dark end of the ramp and light text: a dark
+// surface by intent, which the inverted ramp turns white.
+.o_base_settings .o_setting_container .settings_tab {
+    background: $sd-sunken;
+
+    .selected {
+        background-color: $sd-raised;
+    }
+
+    .tab {
+        color: $sd-muted;
+
+        &:hover,
+        &.selected {
+            color: #fff;
+        }
+    }
+}
+
+.o_base_settings .o_setting_search .searchInput {
+    background-color: transparent;
+    color: $sd-text;
+}
+
+// -- Overlays -----------------------------------------------------------------
+.o_popover {
+    background-color: $sd-view;
+    border-color: $sd-border;
+    color: $sd-text;
+}
+
+.o_command_palette {
+    .o_command_palette_search {
+        background-color: $sd-view;
+        border-bottom-color: $sd-border;
+
+        input {
+            background-color: transparent;
+            color: $sd-text;
+        }
+    }
+
+    .o_command_hotkey kbd,
+    kbd {
+        background-color: $sd-raised;
+        border-color: $sd-border;
+        box-shadow: none;
+        color: $sd-text;
+    }
+
+    .o_command_palette_footer {
+        background-color: $sd-sunken;
+        color: $sd-muted;
+    }
+}
+
+.o_shortcut_table .o_key {
+    background-color: $sd-raised;
+    border-color: $sd-border;
+    box-shadow: none;
+}
+
+// Pivot and graph styles come from a bundle Odoo loads on demand, so they are
+// compiled with the light palette and arrive after this file. The pivot paints
+// its header cells near-white, which the light text of this scheme disappears
+// on; `!important` is the only thing that outlasts a later-loaded sheet.
+.o_web_client .o_pivot table {
+    background-color: $sd-view !important;
+
+    th,
+    .o_pivot_header_cell_opened,
+    .o_pivot_header_cell_closed {
+        background-color: $sd-raised !important;
+
+        &:hover {
+            background-color: $sd-border !important;
+        }
+    }
+
+    .o_pivot_cell_value.o_empty,
+    td.o_empty {
+        background-color: transparent !important;
+    }
+}
+
+.o_web_client .o_graph_renderer canvas,
+.o_web_client .o_graph_canvas_container canvas {
+    background-color: $sd-view !important;
+}
+
+.daterangepicker .calendar-table {
+    background-color: $sd-view;
+}
+
+.o_file_upload_progress_card {
+    border-color: $sd-border;
+}
+
+// -- Discuss ------------------------------------------------------------------
+// The sidebar is a `bg-light` surface, which is the lightest gray on a dark
+// page; pull it back under the thread.
+.o_Discuss_sidebar.bg-light {
+    background-color: $sd-sunken !important;
+}
+
+// The composer textarea carries no background of its own, so the browser's
+// white field shows through.
+.o_ComposerTextInput_textarea {
+    background-color: $sd-view;
+    color: $sd-text;
+
+    &::placeholder {
+        color: #8d8f90;
+    }
+}

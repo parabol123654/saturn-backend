@@ -12,13 +12,15 @@
 }
 
 .o_sidenav {
-    // !important beats the inline width the resize handle writes, so the panel
-    // and the shell padding can never drift apart.
-    width: var(--uw-sidenav, 0px) !important;
+    // The panel and the shell padding read the same variable, so they can
+    // never drift apart.
+    width: var(--uw-sidenav, 0px);
     // The panel is rendered from the main-components container, i.e. near the
-    // end of the body, so a fixed element without `top` would be laid out at
-    // its static offset and fall below the viewport.
+    // end of the body, so it is taken out of the flow and pinned to the edge.
+    position: fixed;
     top: 0;
+    left: 0;
+    z-index: 2;
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -26,6 +28,25 @@
     color: $saturn-text;
     border-right: 1px solid $saturn-border;
     padding-inline: calc(var(--uw-sidenav, 0px) * 0.07);
+
+    // Drag handle on the outer edge. Odoo 15 has no resizable panel component.
+    .o_sidenav_resize_handle {
+        position: absolute;
+        top: 0;
+        right: -3px;
+        bottom: 0;
+        width: 6px;
+        z-index: 3;
+        cursor: col-resize;
+
+        &:hover {
+            background-color: saturn-alpha(text, 0.12);
+        }
+    }
+
+    &.sm .o_sidenav_resize_handle {
+        display: none;
+    }
 
     span.sidenav_hr {
         border-top: 1px solid;
@@ -231,7 +252,7 @@
         }
 
         .btn {
-            font-size: 0.5125rem;
+            font-size: 8.2px;
             padding: 3px 8px;
             border-radius: $saturn-radius-sm;
             border: 1px solid $saturn-border;
@@ -252,9 +273,9 @@
         .u_recent_chip {
             background: saturn-alpha(text, 0.05);
             padding: 3px 7px;
-            font-size: 0.75rem;
+            font-size: 12px;
             color: saturn-alpha(text, 0.98);
-            border-radius: 0.5625rem;
+            border-radius: 9px;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             max-width: 100%;
             user-select: none;
@@ -287,7 +308,7 @@
 
                 .nav-title {
                     margin-left: 10px;
-                    font-size: 0.805rem;
+                    font-size: 12.88px;
                 }
 
                 > .icon {
@@ -323,10 +344,10 @@
         }
 
         .sidenav_head {
-            margin-top: 1.2rem;
+            margin-top: 19.2px;
 
             .sidenav_hr {
-                margin-top: 1.2rem;
+                margin-top: 19.2px;
             }
 
             .navbar-brand {

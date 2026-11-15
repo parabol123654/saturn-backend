@@ -1,0 +1,131 @@
+///
+/// Bootstrap 5 utilities on a Bootstrap 4 backend.
+///
+/// The chrome markup is shared with the later ports of this module, which run
+/// on Bootstrap 5. Odoo 15 ships Bootstrap 4, where the logical-side spacing
+/// classes (`ms-*`, `pe-*`), `gap-*`, `fw-*`, `lh-*`, `opacity-*` and friends
+/// do not exist. They are provided here — only the ones the chrome uses, and
+/// only inside the chrome, so nothing leaks into Odoo's own views.
+///
+/// The spacing scale is restated in pixels on purpose: Odoo 15 sets the root
+/// font size to 12px, so Bootstrap 4's own rem-based `mt-2`, `px-2`… come out
+/// a quarter smaller than the 16px root the chrome was drawn on.
+///
+
+$saturn-spacers: (0: 0, 1: 4px, 2: 8px, 3: 16px, 4: 24px, 5: 48px, auto: auto);
+$saturn-sides: (
+    t: (top),
+    b: (bottom),
+    s: (left),
+    e: (right),
+    x: (left, right),
+    y: (top, bottom),
+);
+
+.o_sidenav,
+.island,
+.sidenav_2nd,
+.u_navbar_start,
+.o_saturn_bookmark {
+    @each $prop, $abbr in (margin: m, padding: p) {
+        @each $size, $value in $saturn-spacers {
+            @if not ($prop == padding and $size == auto) {
+                .#{$abbr}-#{$size} {
+                    #{$prop}: $value !important;
+                }
+                @each $side, $edges in $saturn-sides {
+                    .#{$abbr}#{$side}-#{$size} {
+                        @each $edge in $edges {
+                            #{$prop}-#{$edge}: $value !important;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Bootstrap 4 declares `d-flex` after `d-none`, so an element carrying both
+    // stays visible. The chrome toggles `d-none` on flex containers.
+    .d-none {
+        display: none !important;
+    }
+
+    .gap-1 {
+        gap: 4px !important;
+    }
+
+    .fw-bold {
+        font-weight: 500 !important;
+    }
+
+    .lh-1 {
+        line-height: 1 !important;
+    }
+
+    .z-2 {
+        z-index: 2 !important;
+    }
+
+    .rounded {
+        border-radius: 6px !important;
+    }
+
+    .rounded-2 {
+        border-radius: 6px !important;
+    }
+
+    .rounded-3 {
+        border-radius: 8px !important;
+    }
+
+    .opacity-50 {
+        opacity: 0.5 !important;
+    }
+
+    .opacity-75 {
+        opacity: 0.75 !important;
+    }
+
+    .user-select-none {
+        user-select: none !important;
+    }
+
+    .cursor-pointer {
+        cursor: pointer !important;
+    }
+
+    .pe-none {
+        pointer-events: none !important;
+    }
+
+    .border-transparent {
+        border-color: transparent !important;
+    }
+
+    .btn {
+        font-size: inherit;
+        box-shadow: none;
+    }
+
+    h6 {
+        font-family: inherit;
+    }
+}
+
+// The same rules apply to the chrome roots themselves.
+.o_sidenav.d-none {
+    display: none !important;
+}
+
+.o_saturn_bookmark.px-1 {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+}
+
+// The chrome was drawn on a 14px body; Odoo 15's is 13px.
+.o_sidenav,
+.island,
+.sidenav_2nd {
+    font-size: 14px;
+    line-height: 1.5;
+}

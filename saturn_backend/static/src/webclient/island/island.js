@@ -1,41 +1,61 @@
-import { Component, signal, useEffect, useListener, useOnChange } from "@odoo/owl";
+/** @odoo-module **/
+
 import { registry } from "@web/core/registry";
-import { useService } from "@web/core/utils/hooks";
+import { useEffect } from "@web/core/utils/hooks";
+import { useSaturn } from "@saturn_backend/core/saturn_service";
+
+const { Component } = owl;
+const { useExternalListener, useRef } = owl.hooks;
 
 /**
  * Full screen app drawer. It replaces the standard apps dropdown and doubles
- * as the home screen: when /odoo is opened without an action, the drawer is
+ * as the home screen: when /web is opened without an action, the drawer is
  * what the user lands on.
  */
 export class SaturnIsland extends Component {
-    static template = "saturn_backend.Island";
-
-    searchRef = signal.ref();
-
     setup() {
-        this.saturn = useService("saturn");
-        this.menuService = useService("menu");
+        this.saturn = useSaturn();
         this.state = this.saturn.state;
+        this.searchRef = useRef("search");
 
-        useEffect(() => {
-            document.body.classList.toggle("saturn-island-open", this.state.islandOpen);
-            return () => document.body.classList.remove("saturn-island-open");
-        });
+        useEffect(
+            (open) => {
+                document.body.classList.toggle("saturn-island-open", open);
+                return () => document.body.classList.remove("saturn-island-open");
+            },
+            () => [this.state.islandOpen]
+        );
 
         // The search box only exists while the drawer is open, so its ref
         // flips from null to an element exactly when the drawer opens: focus
-        // on that, rather than on the open flag, which changes a render before
-        // the input is in the DOM.
-        useOnChange(
-            () => [this.searchRef()],
-            (el) => el?.focus()
+        // on that, rather than on the open flag.
+        useEffect(
+            (el) => {
+                if (el) {
+                    el.focus();
+                }
+            },
+            () => [this.searchRef.el]
         );
 
-        useListener(window, "keydown", (ev) => {
-            if (this.state.islandOpen && ev.key === "Escape") {
-                this.saturn.closeIsland();
-            }
-        });
+        // Capture phase: the hotkey service consumes Escape for whatever is
+        // registered behind the drawer, and the action hidden there is still
+        // mounted. A dialog or the command palette sits above the drawer and
+        // keeps its Escape.
+        useExternalListener(
+            window,
+            "keydown",
+            (ev) => {
+                if (
+                    this.state.islandOpen &&
+                    ev.key === "Escape" &&
+                    !document.querySelector(".modal, .o_command_palette")
+                ) {
+                    this.saturn.closeIsland();
+                }
+            },
+            { capture: true }
+        );
     }
 
     get scheme() {
@@ -60,12 +80,8 @@ export class SaturnIsland extends Component {
         return apps.filter((app) => app.name.toLowerCase().includes(query));
     }
 
-    // The getters below read `this.state` during render on purpose: that read
-    // is what subscribes the drawer to pins and bookmarks, so a tile button
-    // re-renders its icon as soon as the data changes.
     get pinnedApps() {
-        const byId = new Map(this.saturn.apps.map((app) => [app.id, app]));
-        return this.state.pins.map((id) => byId.get(id)).filter(Boolean);
+        return this.saturn.pinnedApps;
     }
 
     isAppPinned(app) {
@@ -79,8 +95,8 @@ export class SaturnIsland extends Component {
             return [];
         }
         const appIds = new Set(this.saturn.apps.map((app) => app.id));
-        return this.menuService
-            .getAll()
+        return this.saturn
+            .getAllMenus()
             .filter(
                 (entry) =>
                     entry.id !== "root" &&
@@ -99,16 +115,32 @@ export class SaturnIsland extends Component {
     // -------------------------------------------------------------------------
     // Handlers
     // -------------------------------------------------------------------------
+    setTab(tab) {
+        this.state.islandTab = tab;
+    }
+
+    setPane(pane) {
+        this.state.appsPane = pane;
+    }
+
+    onCloseClick() {
+        this.saturn.closeIsland();
+    }
+
+    onEditPinsClick() {
+        this.saturn.toggleEditPins();
+    }
+
     onAppClick(app, ev) {
         ev.preventDefault();
         this.saturn.closeIsland();
-        this.menuService.selectMenu(app);
+        this.saturn.selectMenu(app);
     }
 
     onEntryClick(entry, ev) {
         ev.preventDefault();
         this.saturn.closeIsland();
-        this.menuService.selectMenu(entry);
+        this.saturn.selectMenu(entry);
     }
 
     onPinClick(app, ev) {
@@ -137,8 +169,14 @@ export class SaturnIsland extends Component {
         });
     }
 
+    onBookmarkRemove(bookmark, ev) {
+        ev.preventDefault();
+        ev.stopPropagation();
+        this.saturn.removeBookmark(bookmark.href);
+    }
+
     appHref(app) {
-        return app.href || `/odoo/action-${app.actionID}`;
+        return this.saturn.menuHref(app);
     }
 
     isAppBookmarked(app) {
@@ -151,7 +189,7 @@ export class SaturnIsland extends Component {
         if (!bookmark.appId) {
             return null;
         }
-        return this.menuService.getMenu(bookmark.appId)?.webIconData || null;
+        return this.saturn.iconSrc(this.saturn.getMenu(bookmark.appId));
     }
 
     onSearchInput(ev) {
@@ -170,13 +208,10 @@ export class SaturnIsland extends Component {
         const first = this.apps[0] || this.menuResults[0];
         if (first) {
             this.saturn.closeIsland();
-            this.menuService.selectMenu(first);
+            this.saturn.selectMenu(first);
         }
     }
-
-    iconClass(app) {
-        return app?.webIcon?.iconClass || "ri-apps-2-line";
-    }
 }
+SaturnIsland.template = "saturn_backend.Island";
 
 registry.category("main_components").add("saturn.Island", { Component: SaturnIsland });

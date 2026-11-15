@@ -11,10 +11,9 @@
 /// runtime the way the `--saturn-*` chrome tokens are.
 ///
 /// Every value is `!default`, and that is load-bearing rather than habit.
-/// `web.assets_web_dark` includes `web.assets_web`, and that include runs
-/// *after* the dark bundle's own prepended `dark_variables.scss` — so plain
-/// assignments here would overwrite the dark palette with the light one, which
-/// is what rendered the primary button black on black. `!default` makes each
+/// The module's dark bundles include the stock ones, and that include runs
+/// *after* their own leading `dark_variables.scss` — so plain assignments here
+/// would overwrite the dark palette with the light one. `!default` makes each
 /// line a no-op once the dark file has already claimed the variable, while
 /// still winning in the light bundle, where nothing has set it yet.
 ///
@@ -43,15 +42,11 @@ $o-view-background-color: #fff !default;
 // Black is the brand's "key statement" colour, so it is what a primary action
 // takes. This replaces Odoo's purple outright.
 $o-brand-primary: #000 !default;
+// Odoo 15 keeps its purple under a second name, used for search facets, the
+// highlighted autocomplete row and similar accents. Dark Gray takes over.
+$o-brand-odoo: #3c3d3e !default;
 $o-brand-secondary: #e1e3e4 !default;
-$o-action: #3c3d3e !default;
 
 // Links are Dark Gray rather than blue; Odoo underlines them, so they still
 // read as links without a hue.
 $o-main-link-color: #3c3d3e !default;
-
-// The selected row of a search panel. Odoo derives this from `$o-info`, so it
-// arrives as a pale sky blue — readable in light mode, but the one hue left in
-// an otherwise grayscale backend. Light Gray carries the same job.
-$o-list-group-active-bg: #e1e3e4 !default;
-$o-list-group-active-color: #000 !default;

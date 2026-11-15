@@ -1,22 +1,13 @@
 // Top bar: the sidebar owns app switching, so the navbar keeps only the
-// drawer toggle, the breadcrumbs and the systray.
+// drawer toggle and the systray.
 
 .o_main_navbar {
-    // Odoo paints the systray counters with `var(--o-navbar-badge-color, inherit)`
-    // and never sets the variable: on its own dark navbar the inherited colour
-    // happens to be near-white, so the fallback works. This chrome inherits its
-    // muted text instead, which put #c8c8c8 on the green counter — 1.9:1. The
-    // variable is the hook Odoo provides, so use it rather than overriding the
-    // rule it feeds.
-    --o-navbar-badge-color: #fff;
-
-    // Odoo 20 fills every systray entry from these, defaulting to the stock
-    // navbar colour — a purple chip behind each icon on this chrome. Same
-    // move as the badge: set the hooks rather than fight the rule.
-    --NavBar-entry-backgroundColor: transparent;
-    --NavBar-entry-backgroundColor--hover: #{saturn-alpha(text, 0.08)};
-    --NavBar-entry-backgroundColor--focus: #{saturn-alpha(text, 0.08)};
-    --NavBar-entry-backgroundColor--active: #{saturn-alpha(text, 0.14)};
+    // Odoo 15 lays the bar out as a four-column grid (apps, brand, sections,
+    // systray). The apps, brand and sections cells are hidden below; the
+    // drawer toggle takes the apps cell.
+    .u_navbar_start {
+        grid-area: apps;
+    }
 
     .o_menu_brand,
     .o_navbar_apps_menu,
@@ -25,80 +16,63 @@
         display: none !important;
     }
 
-    .o_navbar_breadcrumbs,
-    .o_navbar_breadcrumbs .btn {
-        color: $saturn-text-muted;
-    }
-
-    .o_nav_entry,
-    .dropdown-toggle:not(.o-dropdown-toggle-custo) {
-        position: relative;
-        display: flex;
-        align-items: center;
-        // The systray stretches its children, so a button with an explicit
-        // height would be pinned to the top of the bar instead of sitting on
-        // the same line as the avatar.
-        align-self: center;
-        width: auto;
-        height: calc(var(--o-navbar-height) - 20px);
-        border-radius: $saturn-radius;
-        user-select: none;
-        background-color: inherit;
-        font-size: 1em;
-        color: $saturn-text-muted;
-
-        &:hover,
-        &:focus,
-        &.focus {
-            color: #f3f4f6;
-        }
-    }
-
-    // Without this the systray stretches its items to the full bar height.
-    // Items whose button has an explicit height then sit at the top, and the
-    // ones wrapped in a `d-md-block` div (company menu, user menu) cannot be
-    // corrected from the button itself — `align-self` needs a flex parent.
+    // Odoo 15 writes its systray entries for a purple bar: near-white text and
+    // a darkening hover. On this chrome they read from the chrome tokens, so
+    // they follow the scheme.
     .o_menu_systray {
         align-items: center;
-    }
 
-    // Systray entries carry no spacing of their own, so the icons run into each
-    // other and into the company name. Buttons with a badge need far less,
-    // because the badge already overhangs to the right.
-    @media (min-width: 992px) {
-        .o_menu_systray {
-            // Odoo 20 draws these with the `oi` font: messages, activities,
-            // debug menu.
-            button.o_nav_entry,
-            button.o-dropdown:has(> .oi[data-icon="forum"], > .oi[data-icon="schedule"], > .oi[data-icon="bug_report"]) {
-                margin-right: 10px !important;
+        > div,
+        > div > a,
+        > div > label:only-child,
+        .dropdown .dropdown-toggle,
+        .o_nav_entry {
+            color: $saturn-text-muted;
+            height: $saturn-navbar-height - 20px;
+            border-radius: $saturn-radius;
 
-                &:has(.badge) {
-                    margin-right: 2px !important;
-                }
+            &:hover,
+            &:focus {
+                color: $saturn-accent;
             }
+        }
 
-            // Not one of the icon buttons above, so it gets no spacing from
-            // that rule. It needs both sides: the badge button before it only
-            // leaves 2px, which reads as the company name being glued to the
-            // activity counter.
-            .o_switch_company_menu {
-                margin-left: 8px;
-                margin-right: 10px;
+        > div > a,
+        .dropdown .dropdown-toggle,
+        .o_nav_entry {
+            &:hover,
+            &:focus {
+                background-color: saturn-alpha(text, 0.08);
             }
+        }
+
+        > div.show > a,
+        .dropdown.show > .dropdown-toggle {
+            color: $saturn-accent;
+            background-color: saturn-alpha(text, 0.14);
+        }
+
+        // The counters keep their own colours: white on the badge fill.
+        .badge {
+            color: #fff;
+        }
+
+        // The dropdowns hang off buttons that no longer span the bar height.
+        .dropdown-menu {
+            margin-top: 10px;
         }
     }
 
     #island_toggler {
-        --btn-bg: transparent;
-        --btn-border-color: transparent;
-        --btn-color: #{$saturn-text};
         margin: 0 5px 0 10px;
         color: $saturn-text;
         font-size: 1.2em;
+        background: transparent;
+        border-color: transparent;
+        box-shadow: none;
 
         &:hover {
-            color: #fff;
+            color: $saturn-accent;
         }
     }
 
@@ -106,10 +80,16 @@
         margin-left: 16px;
 
         img {
-            max-height: calc(var(--o-navbar-height) - 13px);
+            max-height: $saturn-navbar-height - 13px;
             min-height: 27px;
         }
     }
+}
+
+// Odoo paints a hazard stripe behind the systray for the superuser and fills
+// it back in with its purple; keep the stripe, fill with the chrome instead.
+body.o_is_superuser .o_menu_systray:before {
+    background-color: $saturn-bg-alt;
 }
 
 // Without the sidebar (small screens) the navbar carries the branding.

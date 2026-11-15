@@ -1,11 +1,13 @@
+/** @odoo-module **/
+
 import { patch } from "@web/core/utils/patch";
 import { NavBar } from "@web/webclient/navbar/navbar";
-import { useService } from "@web/core/utils/hooks";
+import { useSaturn } from "@saturn_backend/core/saturn_service";
 
-patch(NavBar.prototype, {
+patch(NavBar.prototype, "saturn_backend.NavBar", {
     setup() {
-        super.setup();
-        this.saturn = useService("saturn");
+        this._super(...arguments);
+        this.saturn = useSaturn();
     },
 
     /** The apps dropdown is replaced by the full screen drawer. */

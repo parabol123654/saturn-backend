@@ -1,10 +1,13 @@
+/** @odoo-module **/
+
 import { registry } from "@web/core/registry";
-import { proxy } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
-import { user } from "@web/core/user";
-import { cookie } from "@web/core/browser/cookie";
 import { browser } from "@web/core/browser/browser";
 import { session } from "@web/session";
+import { useBus } from "@web/core/utils/hooks";
+
+const { EventBus } = owl.core;
+const { useComponent } = owl.hooks;
 
 const MAX_RECENTS = 14;
 const DEFAULT_WIDTH = 243;
@@ -12,10 +15,9 @@ const MIN_WIDTH = 186;
 
 // Scoped per database and user: one origin can serve several databases, and a
 // browser profile is often shared, so a single key would show one user the
-// record names of another. `session` carries no uid client side in Odoo 20 —
-// `user.userId` is the one that is actually populated.
+// record names of another.
 function recentsKey() {
-    return `saturn.recents.${session.db || "db"}.${user.userId ?? "anon"}`;
+    return `saturn.recents.${session.db || "db"}.${session.uid || "anon"}`;
 }
 
 /** Parse a stored JSON list, tolerating anything that is not one. */
@@ -34,7 +36,7 @@ function safeJSONArray(value) {
         // The shape matters as much as the parse: a scalar here would make
         // every `.includes()` on it throw from inside a template.
         return Array.isArray(parsed) ? parsed : [];
-    } catch {
+    } catch (_error) {
         return [];
     }
 }
@@ -47,59 +49,106 @@ function clampWidth(width) {
     return Math.max(MIN_WIDTH, value);
 }
 
+/** Address of the current view. Odoo 15 keeps it in the URL hash. */
+export function currentHref() {
+    const { pathname, search, hash } = browser.location;
+    return pathname + search + hash;
+}
+
+// The service is also needed from the legacy control panel, which lives in the
+// legacy environment and so cannot reach it through `useService`.
+let instance = null;
+
+/**
+ * Gives a component the chrome service and re-renders it whenever the shared
+ * state changes. Owl 1 has no shared reactive objects (`useState` observes per
+ * component), so the service publishes its changes on a bus instead.
+ */
+export function useSaturn() {
+    const component = useComponent();
+    useBus(instance.bus, "UPDATE", () => component.render());
+    return instance;
+}
+
 /**
  * Holds every piece of chrome state that the side navigation, the navbar and
  * the app drawer share, and mirrors the persistent part of it onto
  * ``res.users.settings``.
  */
 export const saturnService = {
-    dependencies: ["menu", "action", "ui", "notification"],
-    start(env, { menu, action, notification }) {
-        const settings = user.settings || {};
+    dependencies: ["menu", "action", "notification", "orm", "cookie"],
+    start(env, { menu, action, notification, orm, cookie }) {
+        const info = session.saturn || {};
+        const settings = info.settings || {};
         const RECENTS_KEY = recentsKey();
+        const bus = new EventBus();
 
-        // A plain OWL 3 proxy: every component render is a tracked
-        // computation, so reading this state from a template is enough to
-        // re-render on change — there is no `useState` wrapper any more.
-        const state = proxy({
-            // Side navigation
-            navMode: settings.saturn_nav_mode === "menu" ? "menu" : "apps",
-            navAppId: null, // app pinned in "menu" mode; null == follow current app
-            footMode: "recent", // "recent" | "menu"
-            collapsed: !!settings.saturn_sidenav_collapsed,
-            // Clamped on the way in too: a stored value below MIN_WIDTH would
-            // otherwise survive every reload, since setWidth only runs on drag.
-            width: clampWidth(settings.saturn_sidenav_width),
-            closedSections: {},
-            // App drawer
-            islandOpen: false,
-            islandTab: "pick", // "pick" | "space"
-            appsPane: "all", // "pinned" | "all"
-            editingPins: false,
-            search: "",
-            // Persisted collections
-            pins: safeJSONArray(settings.saturn_pins),
-            bookmarks: safeJSONArray(settings.saturn_bookmarks),
-            recents: safeJSONArray(browser.localStorage.getItem(RECENTS_KEY)),
-        });
+        // Several keys are often written in one go; publish once per tick.
+        let scheduled = false;
+        function notify() {
+            if (scheduled) {
+                return;
+            }
+            scheduled = true;
+            Promise.resolve().then(() => {
+                scheduled = false;
+                bus.trigger("UPDATE");
+            });
+        }
 
-        // Keep the cookie in step with the scheme the server resolved. Stock
-        // code reads the cookie directly (chart palettes, the code editor
-        // theme, the spreadsheet dashboard renderer), so on the dark default,
-        // where no cookie has been written yet, those widgets would come out
-        // light on a dark page.
-        const resolvedScheme = session.saturn?.color_scheme;
+        // Every write goes through this proxy, so assigning a key anywhere is
+        // enough to refresh the components subscribed with `useSaturn`.
+        // Collections are always replaced, never mutated in place.
+        const state = new Proxy(
+            {
+                // Side navigation
+                navMode: settings.saturn_nav_mode === "menu" ? "menu" : "apps",
+                navAppId: null, // app pinned in "menu" mode; null == follow current app
+                footMode: "recent", // "recent" | "menu"
+                collapsed: !!settings.saturn_sidenav_collapsed,
+                // Clamped on the way in too: a stored value below MIN_WIDTH would
+                // otherwise survive every reload, since setWidth only runs on drag.
+                width: clampWidth(settings.saturn_sidenav_width),
+                closedSections: {},
+                // App drawer
+                islandOpen: false,
+                islandTab: "pick", // "pick" | "space"
+                appsPane: "all", // "pinned" | "all"
+                editingPins: false,
+                search: "",
+                // Persisted collections
+                pins: safeJSONArray(settings.saturn_pins),
+                bookmarks: safeJSONArray(settings.saturn_bookmarks),
+                recents: safeJSONArray(browser.localStorage.getItem(RECENTS_KEY)),
+            },
+            {
+                set(target, key, value) {
+                    if (target[key] !== value) {
+                        target[key] = value;
+                        notify();
+                    }
+                    return true;
+                },
+            }
+        );
+
+        // Keep the cookie in step with the scheme the server resolved, so the
+        // next request is answered with the same bundle even before the user
+        // has ever used the switch.
+        const resolvedScheme = info.color_scheme;
         if (
             (resolvedScheme === "light" || resolvedScheme === "dark") &&
-            cookie.get("color_scheme") !== resolvedScheme
+            cookie.current.color_scheme !== resolvedScheme
         ) {
-            cookie.set("color_scheme", resolvedScheme);
+            cookie.setCookie("color_scheme", resolvedScheme);
         }
 
         function persist(key, value) {
             // Silently ignore write failures: the chrome must keep working even
-            // when the user cannot store settings (public user, readonly db...).
-            Promise.resolve(user.setUserSettings(key, value)).catch(() => {});
+            // when the user cannot store settings (readonly db...).
+            return Promise.resolve(
+                orm.call("res.users.settings", "saturn_set_settings", [{ [key]: value }])
+            ).catch(() => {});
         }
 
         let widthTimer = null;
@@ -111,18 +160,48 @@ export const saturnService = {
         function storeRecents() {
             try {
                 browser.localStorage.setItem(RECENTS_KEY, JSON.stringify(state.recents));
-            } catch {
+            } catch (_error) {
                 // storage full or disabled - recents are a convenience only
             }
         }
 
         function isHomeUrl() {
             const path = browser.location.pathname.replace(/\/+$/, "");
-            return path === "/odoo" || path === "/web" || path === "";
+            const hash = browser.location.hash.replace(/^#/, "");
+            return (path === "/web" || path === "") && !hash;
+        }
+
+        // `title` is the breadcrumb label the legacy views publish: the record
+        // name on a form, where the action name would only say which list it
+        // belongs to. The new views (graph, pivot) publish none, and a form
+        // without a record (a new one, or Settings) is titled "New", which
+        // names nothing — both fall back to the action name.
+        function controllerName(controller) {
+            if (!controller) {
+                return "";
+            }
+            const hash = browser.location.hash;
+            const blankForm = /[#&]view_type=form(&|$)/.test(hash) && !/[#&]id=\d+/.test(hash);
+            const action = controller.action || {};
+            return (!blankForm && controller.title) || action.display_name || action.name || "";
+        }
+
+        function hashParam(href, key) {
+            const match = new RegExp(`[#&]${key}=([^&]*)`).exec(href || "");
+            return match ? match[1] : "";
+        }
+
+        // Two addresses can name the same place: Odoo adds parameters to the
+        // hash after the fact (`active_id`, `cids`). Same label, same action
+        // and same record is the same recent.
+        function recentKey(recent) {
+            const href = recent.href;
+            return [recent.name, hashParam(href, "action") || hashParam(href, "model"), hashParam(href, "id")].join("|");
         }
 
         // The drawer takes over the whole screen, so it doubles as the home
-        // screen: landing on /odoo without an action opens it.
+        // screen: landing on /web without an action opens it. (Odoo 15 then
+        // opens the first app on its own, which dismisses it again.)
         state.islandOpen = isHomeUrl();
 
         // Navigating from anywhere else (breadcrumb, browser back, a command)
@@ -133,35 +212,45 @@ export const saturnService = {
         // controllers rather than elapsed time keeps a real navigation (Back,
         // a command) closing the drawer no matter how soon it happens.
         let openedOver = null;
-        env.bus.addEventListener("ACTION_MANAGER:UI-UPDATED", () => {
+        env.bus.on("ACTION_MANAGER:UI-UPDATED", null, () => {
             if (action.currentController !== openedOver) {
                 state.islandOpen = false;
                 state.search = "";
                 openedOver = null;
             }
-            trackRecent();
+            // The router pushes the new hash on a timer, after this event: wait
+            // for it, or the recent would be filed under the previous address.
+            browser.setTimeout(() => {
+                trackRecent();
+                notify();
+            }, 50);
         });
 
-        env.bus.addEventListener("MENUS:APP-CHANGED", () => {
+        env.bus.on("MENUS:APP-CHANGED", null, () => {
             // Follow the app that is actually open again.
             state.navAppId = null;
+            notify();
         });
 
+        // Browser back/forward changes the hash without a new controller.
+        browser.addEventListener("hashchange", notify);
+
         function trackRecent() {
-            const controller = action.currentController;
-            const name = controller?.displayName;
+            const name = controllerName(action.currentController);
             if (!name) {
                 return;
             }
-            const href = browser.location.pathname + browser.location.search;
-            const recents = state.recents.filter((recent) => recent.href !== href);
-            recents.unshift({ name, href });
+            const entry = { name, href: currentHref() };
+            const key = recentKey(entry);
+            const recents = state.recents.filter((recent) => recentKey(recent) !== key);
+            recents.unshift(entry);
             state.recents = recents.slice(0, MAX_RECENTS);
             storeRecents();
         }
 
         const service = {
             state,
+            bus,
             MIN_WIDTH,
             DEFAULT_WIDTH,
 
@@ -169,7 +258,9 @@ export const saturnService = {
             // Apps
             // ---------------------------------------------------------------
             get apps() {
-                return menu.getApps().filter((app) => app.actionID || app.children?.length);
+                return menu
+                    .getApps()
+                    .filter((app) => app.actionID || (app.children && app.children.length));
             },
             get pinnedApps() {
                 const byId = new Map(this.apps.map((app) => [app.id, app]));
@@ -182,9 +273,19 @@ export const saturnService = {
             get hasAction() {
                 return !!action.currentController;
             },
+            /** Id of the action on screen, used to highlight its menu entry. */
+            get currentActionId() {
+                const controller = action.currentController;
+                return controller && controller.action ? controller.action.id : null;
+            },
+            /** Name of the view on screen, used to label a bookmark. */
+            get currentTitle() {
+                return controllerName(action.currentController) || document.title;
+            },
             /** App whose menus are shown in "menu" mode. */
             get navApp() {
-                const appId = state.navAppId ?? this.currentApp?.id;
+                const current = this.currentApp;
+                const appId = state.navAppId || (current && current.id);
                 return appId ? menu.getMenu(appId) : undefined;
             },
             get navSections() {
@@ -202,7 +303,7 @@ export const saturnService = {
                 const sections = [];
                 let loose = null;
                 for (const child of tree.childrenTree || []) {
-                    if (child.childrenTree?.length) {
+                    if (child.childrenTree && child.childrenTree.length) {
                         sections.push(child);
                     } else {
                         // Leaves directly under the app get their own leading
@@ -212,6 +313,44 @@ export const saturnService = {
                     }
                 }
                 return loose ? [loose, ...sections] : sections;
+            },
+            /**
+             * Address of a menu. Odoo 15 routes on the URL hash, and a menu
+             * record carries no ready-made link.
+             */
+            menuHref(entry) {
+                if (!entry) {
+                    return "#";
+                }
+                const parts = [`menu_id=${entry.id}`];
+                if (entry.actionID) {
+                    parts.push(`action=${entry.actionID}`);
+                }
+                return "/web#" + parts.join("&");
+            },
+            /**
+             * Image source of an app icon. Odoo 15 sends the bare base64
+             * payload, without the `data:` prefix later versions add.
+             */
+            iconSrc(app) {
+                const data = app && app.webIconData;
+                if (!data) {
+                    return null;
+                }
+                if (data.startsWith("data:") || data.startsWith("/")) {
+                    return data;
+                }
+                const isSvg = data.startsWith("PD") || data.startsWith("PHN2");
+                return `data:${isSvg ? "image/svg+xml" : "image/png"};base64,${data}`;
+            },
+            selectMenu(entry) {
+                return menu.selectMenu(entry);
+            },
+            getMenu(menuId) {
+                return menu.getMenu(menuId);
+            },
+            getAllMenus() {
+                return menu.getAll();
             },
             isPinned(appId) {
                 return state.pins.includes(appId);
@@ -255,10 +394,9 @@ export const saturnService = {
                 persistWidth(state.width);
             },
             toggleSection(sectionId) {
-                state.closedSections = {
-                    ...state.closedSections,
+                state.closedSections = Object.assign({}, state.closedSections, {
                     [sectionId]: !state.closedSections[sectionId],
-                };
+                });
             },
             isSectionOpen(sectionId) {
                 return !state.closedSections[sectionId];
@@ -308,10 +446,6 @@ export const saturnService = {
             get bookmarkGroups() {
                 return this.groupBookmarks(state.bookmarks);
             },
-            /**
-             * Grouping as a pure function of the list, so a component can pass
-             * the list it read during render and so stay subscribed to it.
-             */
             groupBookmarks(bookmarks) {
                 const order = ["dir", "doc", "pln", "rpg", "cmd"];
                 const labels = {
@@ -357,24 +491,24 @@ export const saturnService = {
                 // instead of re-deriving it — any second guess here can only
                 // disagree with the stylesheet that is actually on the page.
                 // The cookie is the fallback for a session_info without it.
-                const reported = session.saturn?.color_scheme;
+                const reported = info.color_scheme;
                 if (reported === "light" || reported === "dark") {
                     return reported;
                 }
-                return cookie.get("color_scheme") === "light" ? "light" : "dark";
+                return cookie.current.color_scheme === "light" ? "light" : "dark";
             },
             async switchColorScheme() {
                 const target = this.scheme === "dark" ? "light" : "dark";
                 // Cookie for this browser, setting so the choice survives a
                 // cookie reset and follows the user to another one.
-                cookie.set("color_scheme", target);
-                await Promise.resolve(user.setUserSettings("color_scheme", target)).catch(() => {});
+                cookie.setCookie("color_scheme", target);
+                await persist("color_scheme", target);
                 browser.location.reload();
             },
             get companyId() {
                 return (
-                    session.saturn?.company_id ||
-                    session.user_companies?.current_company ||
+                    info.company_id ||
+                    (session.user_companies && session.user_companies.current_company) ||
                     session.company_id ||
                     1
                 );
@@ -391,25 +525,26 @@ export const saturnService = {
             },
             /** Sidebar logo: company override first, then the brand wordmark. */
             get logoUrl() {
-                if (session.saturn?.has_logo) {
+                if (info.has_logo) {
                     return `/web/image/res.company/${this.companyId}/saturn_logo`;
                 }
                 return this.brandLogo(false);
             },
             get logoMiniUrl() {
-                if (session.saturn?.has_logo_mini) {
+                if (info.has_logo_mini) {
                     return `/web/image/res.company/${this.companyId}/saturn_logo_mini`;
                 }
                 return this.brandLogo(true);
             },
-            /** Drawer background, or null to fall back on the CSS gradient. */
+            /** Drawer background, or null to fall back on the flat field. */
             get backgroundUrl() {
-                return session.saturn?.has_background
+                return info.has_background
                     ? `/web/image/res.company/${this.companyId}/saturn_background`
                     : null;
             },
         };
 
+        instance = service;
         return service;
     },
 };

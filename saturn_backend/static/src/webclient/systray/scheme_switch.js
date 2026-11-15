@@ -1,6 +1,9 @@
-import { Component } from "@odoo/owl";
+/** @odoo-module **/
+
 import { registry } from "@web/core/registry";
-import { useService } from "@web/core/utils/hooks";
+import { useSaturn } from "@saturn_backend/core/saturn_service";
+
+const { Component } = owl;
 
 /**
  * Colour scheme toggle in the systray.
@@ -10,15 +13,18 @@ import { useService } from "@web/core/utils/hooks";
  * is the copy that stays reachable from every screen.
  */
 export class SaturnSchemeSwitch extends Component {
-    static template = "saturn_backend.SchemeSwitch";
-
     setup() {
-        this.saturn = useService("saturn");
+        this.saturn = useSaturn();
+    }
+
+    onClick() {
+        this.saturn.switchColorScheme();
     }
 }
+SaturnSchemeSwitch.template = "saturn_backend.SchemeSwitch";
 
 export const saturnSchemeSwitchItem = { Component: SaturnSchemeSwitch };
 
 // Systray entries are sorted by sequence and then reversed, so a high sequence
-// puts this at the left end of the systray, where the original sits.
+// puts this at the left end of the systray.
 registry.category("systray").add("saturn.scheme_switch", saturnSchemeSwitchItem, { sequence: 100 });
