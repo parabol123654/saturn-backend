@@ -1,4 +1,4 @@
-import { Component, signal, useEffect, useListener, useOnChange } from "@odoo/owl";
+import { Component, useEffect, useExternalListener, useRef, useState } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 
@@ -9,33 +9,50 @@ import { useService } from "@web/core/utils/hooks";
  */
 export class SaturnIsland extends Component {
     static template = "saturn_backend.Island";
-
-    searchRef = signal.ref();
+    static props = {};
 
     setup() {
         this.saturn = useService("saturn");
         this.menuService = useService("menu");
-        this.state = this.saturn.state;
+        this.state = useState(this.saturn.state);
+        this.searchRef = useRef("search");
 
-        useEffect(() => {
-            document.body.classList.toggle("saturn-island-open", this.state.islandOpen);
-            return () => document.body.classList.remove("saturn-island-open");
-        });
+        useEffect(
+            (open) => {
+                document.body.classList.toggle("saturn-island-open", open);
+                return () => document.body.classList.remove("saturn-island-open");
+            },
+            () => [this.state.islandOpen]
+        );
 
         // The search box only exists while the drawer is open, so its ref
         // flips from null to an element exactly when the drawer opens: focus
         // on that, rather than on the open flag, which changes a render before
         // the input is in the DOM.
-        useOnChange(
-            () => [this.searchRef()],
-            (el) => el?.focus()
+        useEffect(
+            (el) => el?.focus(),
+            () => [this.searchRef.el]
         );
 
-        useListener(window, "keydown", (ev) => {
-            if (this.state.islandOpen && ev.key === "Escape") {
-                this.saturn.closeIsland();
-            }
-        });
+        // Capture phase: the hotkey plugin calls `stopImmediatePropagation()`
+        // once any registration consumes the key, and the action hidden behind
+        // the drawer is still mounted — a list view's search bar registers
+        // Escape, so a bubbling listener here never fires over a list. A dialog
+        // or the command palette sits above the drawer and keeps its Escape.
+        useExternalListener(
+            window,
+            "keydown",
+            (ev) => {
+                if (
+                    this.state.islandOpen &&
+                    ev.key === "Escape" &&
+                    !document.querySelector(".modal, .o_command_palette")
+                ) {
+                    this.saturn.closeIsland();
+                }
+            },
+            { capture: true }
+        );
     }
 
     get scheme() {
@@ -138,7 +155,7 @@ export class SaturnIsland extends Component {
     }
 
     appHref(app) {
-        return app.href || `/odoo/action-${app.actionID}`;
+        return this.saturn.menuHref(app);
     }
 
     isAppBookmarked(app) {

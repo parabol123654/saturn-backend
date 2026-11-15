@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Odoo 18 Community picks the bundle from the `color_scheme` cookie
+        alone, so a browser without the cookie would get the light bundle
+        while the chrome is told "dark". Ask `ir.http.color_scheme()` instead:
+        cookie, then the stored user setting, then dark.
+    -->
+    <template id="webclient_bootstrap" inherit_id="web.webclient_bootstrap">
+        <xpath expr="//t[@t-call-assets='web.assets_web_dark']/.." position="attributes">
+            <attribute name="t-if">request.env['ir.http'].color_scheme() == 'dark'</attribute>
+        </xpath>
+    </template>
+
+</odoo>

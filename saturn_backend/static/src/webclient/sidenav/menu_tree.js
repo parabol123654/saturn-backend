@@ -1,6 +1,5 @@
 import { Component } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
-import { browser } from "@web/core/browser/browser";
 import { sectionIcon } from "@saturn_backend/core/section_icons";
 
 /**
@@ -41,19 +40,26 @@ export class MenuTree extends Component {
         return rows;
     }
 
+    /**
+     * Whether the entry is the one on screen. The action decides, so a record
+     * opened from a list keeps its menu lit. Not the URL prefix: the URL also
+     * nests whatever the breadcrumbs went through, which would light the
+     * entry the user came from as well.
+     */
     isCurrentEntry(entry) {
-        const href = entry?.href || "";
-        if (!href || href === "#") {
+        if (!entry?.actionID) {
             return false;
         }
-        return browser.location.pathname === href.split("?")[0];
+        const { path, actionId } = this.state;
+        if (actionId) {
+            return actionId === entry.actionID;
+        }
+        return path === this.saturn.menuHref(entry);
     }
 
     onEntryClick(entry, ev) {
         ev.preventDefault();
         this.menuService.selectMenu(entry);
-        // Owl 3 only defines `this.props` through `useProps`, and the sidebar
-        // declares none.
-        this.props?.close?.();
+        this.props.close?.();
     }
 }

@@ -1,5 +1,5 @@
 import { registry } from "@web/core/registry";
-import { proxy } from "@odoo/owl";
+import { reactive } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
 import { user } from "@web/core/user";
 import { cookie } from "@web/core/browser/cookie";
@@ -12,7 +12,7 @@ const MIN_WIDTH = 186;
 
 // Scoped per database and user: one origin can serve several databases, and a
 // browser profile is often shared, so a single key would show one user the
-// record names of another. `session` carries no uid client side in Odoo 20 —
+// record names of another. `session` carries no uid client side —
 // `user.userId` is the one that is actually populated.
 function recentsKey() {
     return `saturn.recents.${session.db || "db"}.${user.userId ?? "anon"}`;
@@ -58,10 +58,9 @@ export const saturnService = {
         const settings = user.settings || {};
         const RECENTS_KEY = recentsKey();
 
-        // A plain OWL 3 proxy: every component render is a tracked
-        // computation, so reading this state from a template is enough to
-        // re-render on change — there is no `useState` wrapper any more.
-        const state = proxy({
+        // A shared reactive object: components subscribe to it with
+        // `useState(saturn.state)` and re-render on the keys they read.
+        const state = reactive({
             // Side navigation
             navMode: settings.saturn_nav_mode === "menu" ? "menu" : "apps",
             navAppId: null, // app pinned in "menu" mode; null == follow current app
@@ -77,6 +76,10 @@ export const saturnService = {
             appsPane: "all", // "pinned" | "all"
             editingPins: false,
             search: "",
+            // Where the web client currently is; drives the highlighted menu
+            // entry. Kept here so that reading it subscribes the sidebar.
+            path: browser.location.pathname,
+            actionId: null,
             // Persisted collections
             pins: safeJSONArray(settings.saturn_pins),
             bookmarks: safeJSONArray(settings.saturn_bookmarks),
@@ -139,8 +142,17 @@ export const saturnService = {
                 state.search = "";
                 openedOver = null;
             }
+            syncLocation();
+            // The event can fire while the previous controller is still the
+            // current one, so read again once the action manager has settled.
+            browser.setTimeout(syncLocation, 0);
             trackRecent();
         });
+
+        function syncLocation() {
+            state.path = browser.location.pathname;
+            state.actionId = action.currentController?.action?.id ?? null;
+        }
 
         env.bus.addEventListener("MENUS:APP-CHANGED", () => {
             // Follow the app that is actually open again.
@@ -212,6 +224,17 @@ export const saturnService = {
                     }
                 }
                 return loose ? [loose, ...sections] : sections;
+            },
+            /**
+             * Link of a menu entry. The menu service hands out no href, so
+             * build the one the stock navbar builds; it is what makes
+             * middle-click and "open in new tab" work.
+             */
+            menuHref(menu) {
+                if (!menu?.actionID) {
+                    return "#";
+                }
+                return `/odoo/${menu.actionPath || "action-" + menu.actionID}`;
             },
             isPinned(appId) {
                 return state.pins.includes(appId);

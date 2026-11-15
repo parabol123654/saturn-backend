@@ -1,8 +1,8 @@
-# Saturn Backend (Community) — Odoo 20
+# Saturn Backend (Community) — Odoo 18
 
-The Saturn backend chrome for Odoo 20: a
+The Saturn backend chrome for Odoo 18: a
 resizable side navigation, a full screen app drawer, pinned apps and a bookmark
-workspace, on a dark Inter-based palette.
+workspace, on a grayscale palette with light and dark schemes.
 
 ## What it changes
 
@@ -18,17 +18,20 @@ workspace, on a dark Inter-based palette.
 
 ## The dark palette
 
-Odoo 20 **Community still has no working dark colour scheme**, which is easy to miss:
+Odoo 18 **Community still has no working dark colour scheme**, which is easy to miss:
 
-- `ir.http.color_scheme()` returns a hardcoded `"light"`, so
-  `web.assets_web_dark` is never served and a scheme switch does nothing;
+- the bootstrap template serves `web.assets_web_dark` only when the browser
+  already carries a `color_scheme=dark` cookie, and nothing in Community ever
+  writes it, so there is no way to reach it and no way to keep the choice;
 - that bundle is only `web.assets_web` plus a handful of cosmetic
   `*.dark.scss` patches, so even when served it comes out identical to the
   light one.
 
 So the module ships the palette itself:
 
-- `models/ir_http.py` overrides `color_scheme()` to resolve the scheme from the
+- `models/ir_http.py` adds `color_scheme()`, and
+  `views/webclient_templates.xml` makes the bootstrap template ask it instead
+  of reading the cookie itself. It resolves the scheme from the
   cookie, then the `color_scheme` field on `res.users.settings`, then dark. The
   cookie is what the switch writes for the current browser; the setting is what
   carries the choice to a new browser or past a cookie reset. `session_info()`
