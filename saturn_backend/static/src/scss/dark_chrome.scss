@@ -53,7 +53,7 @@
     background: #0b0b0c;
 }
 
-// Spreadsheet dashboards. Odoo 20 draws them dark itself once the
+// Spreadsheet dashboards. Odoo 19 draws them dark itself once the
 // `color_scheme` cookie says so (see `saturn_service.js`), by filtering every
 // figure it marks `os-theme-dependant`. Image figures are left out on purpose,
 // since a photo or logo must not be inverted, but on a sample dashboard (shown

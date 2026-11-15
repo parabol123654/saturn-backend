@@ -11,6 +11,7 @@ import { useService } from "@web/core/utils/hooks";
  */
 export class SaturnSchemeSwitch extends Component {
     static template = "saturn_backend.SchemeSwitch";
+    static props = {};
 
     setup() {
         this.saturn = useService("saturn");

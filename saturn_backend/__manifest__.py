@@ -1,20 +1,21 @@
 {
     "name": "Saturn Backend (Community)",
-    "summary": "Dark backend UI for Odoo 20: app drawer, sidebar navigation, pinned apps",
+    "summary": "Dark backend UI for Odoo 19: app drawer, sidebar navigation, pinned apps",
     "description": """
 Saturn Backend
 ==============
 
-The Saturn backend experience for Odoo 20:
+The Saturn backend experience for Odoo 19:
 
 * a resizable left side navigation that switches between *Apps* and *Menu* mode;
 * a full screen app drawer ("island") with pinned apps, all features and a
   bookmark workspace;
 * recent-record chips, a compact icon-only sidebar mode and a colour scheme
   switch;
-* a dark, Inter-based chrome built on top of Odoo's own dark colour scheme.
+* a grayscale chrome set in Be Vietnam Pro, with working light and dark
+  colour schemes (Community ships no usable dark scheme of its own).
 """,
-    "version": "20.0.1.0.0",
+    "version": "19.0.1.0.0",
     "category": "Themes/Backend",
     "author": "Manh Nguyen",
     "license": "AGPL-3",

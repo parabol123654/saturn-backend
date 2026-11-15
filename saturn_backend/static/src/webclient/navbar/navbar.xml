@@ -8,7 +8,7 @@
                     data-hotkey="h" title="Main Menu" t-on-click="this.onSaturnToggle">
                 <i class="ri-apps-2-line"/>
             </button>
-            <a t-if="this.ui.isSmall" class="u_navbar_logo d-flex align-items-center" href="/odoo">
+            <a t-if="this.saturnUi.isSmall" class="u_navbar_logo d-flex align-items-center" href="/odoo">
                 <img t-att-src="this.saturn.logoMiniUrl" alt=""/>
             </a>
         </div>

@@ -1,8 +1,8 @@
-# Saturn Backend (Community) — Odoo 20
+# Saturn Backend (Community) — Odoo 19
 
-The Saturn backend chrome for Odoo 20: a
+The Saturn backend chrome for Odoo 19: a
 resizable side navigation, a full screen app drawer, pinned apps and a bookmark
-workspace, on a dark Inter-based palette.
+workspace, on a grayscale palette with light and dark schemes.
 
 ## What it changes
 
@@ -18,7 +18,7 @@ workspace, on a dark Inter-based palette.
 
 ## The dark palette
 
-Odoo 20 **Community still has no working dark colour scheme**, which is easy to miss:
+Odoo 19 **Community still has no working dark colour scheme**, which is easy to miss:
 
 - `ir.http.color_scheme()` returns a hardcoded `"light"`, so
   `web.assets_web_dark` is never served and a scheme switch does nothing;
