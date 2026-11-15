@@ -1,7 +1,8 @@
+/** @odoo-module **/
+
 import { registry } from "@web/core/registry";
-import { proxy } from "@odoo/owl";
+import { reactive } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
-import { user } from "@web/core/user";
 import { cookie } from "@web/core/browser/cookie";
 import { browser } from "@web/core/browser/browser";
 import { session } from "@web/session";
@@ -12,10 +13,15 @@ const MIN_WIDTH = 186;
 
 // Scoped per database and user: one origin can serve several databases, and a
 // browser profile is often shared, so a single key would show one user the
-// record names of another. `session` carries no uid client side in Odoo 20 —
-// `user.userId` is the one that is actually populated.
-function recentsKey() {
+// record names of another.
+function recentsKey(user) {
     return `saturn.recents.${session.db || "db"}.${user.userId ?? "anon"}`;
+}
+
+/** The address of what is displayed: Odoo 17 keeps the whole state in the hash. */
+function currentHref() {
+    const { pathname, search, hash } = browser.location;
+    return pathname + search + hash;
 }
 
 /** Parse a stored JSON list, tolerating anything that is not one. */
@@ -53,15 +59,14 @@ function clampWidth(width) {
  * ``res.users.settings``.
  */
 export const saturnService = {
-    dependencies: ["menu", "action", "ui", "notification"],
-    start(env, { menu, action, notification }) {
+    dependencies: ["menu", "action", "ui", "notification", "user", "router"],
+    start(env, { menu, action, notification, user, router }) {
         const settings = user.settings || {};
-        const RECENTS_KEY = recentsKey();
+        const RECENTS_KEY = recentsKey(user);
 
-        // A plain OWL 3 proxy: every component render is a tracked
-        // computation, so reading this state from a template is enough to
-        // re-render on change — there is no `useState` wrapper any more.
-        const state = proxy({
+        // A shared reactive object: components subscribe to it with
+        // `useState(saturn.state)` and re-render on the keys they read.
+        const state = reactive({
             // Side navigation
             navMode: settings.saturn_nav_mode === "menu" ? "menu" : "apps",
             navAppId: null, // app pinned in "menu" mode; null == follow current app
@@ -71,6 +76,10 @@ export const saturnService = {
             // otherwise survive every reload, since setWidth only runs on drag.
             width: clampWidth(settings.saturn_sidenav_width),
             closedSections: {},
+            // Address of the displayed view, kept in step with the router so
+            // that anything derived from it (bookmark star, current menu
+            // entry) re-renders when it changes.
+            href: currentHref(),
             // App drawer
             islandOpen: false,
             islandTab: "pick", // "pick" | "space"
@@ -118,11 +127,15 @@ export const saturnService = {
 
         function isHomeUrl() {
             const path = browser.location.pathname.replace(/\/+$/, "");
-            return path === "/odoo" || path === "/web" || path === "";
+            if (path !== "/web" && path !== "") {
+                return false;
+            }
+            // `/web#action=...` is a view, bare `/web` (or `/web#cids=1`) is home.
+            return !/[#&](action|model|menu_id)=/.test(browser.location.hash);
         }
 
         // The drawer takes over the whole screen, so it doubles as the home
-        // screen: landing on /odoo without an action opens it.
+        // screen: landing on /web without an action opens it.
         state.islandOpen = isHomeUrl();
 
         // Navigating from anywhere else (breadcrumb, browser back, a command)
@@ -139,21 +152,50 @@ export const saturnService = {
                 state.search = "";
                 openedOver = null;
             }
-            trackRecent();
+            // The router pushes the new hash on a timer, after this event: the
+            // address read right now would still be the previous view's.
+            const controller = action.currentController;
+            scheduleHrefRefresh(() => trackRecent(controller));
         });
+
+        let hrefTimer = null;
+        let afterRefresh = [];
+        function scheduleHrefRefresh(callback) {
+            if (callback) {
+                afterRefresh.push(callback);
+            }
+            browser.clearTimeout(hrefTimer);
+            hrefTimer = browser.setTimeout(() => {
+                state.href = currentHref();
+                const callbacks = afterRefresh;
+                afterRefresh = [];
+                callbacks.forEach((cb) => cb());
+            });
+        }
+        // Record paging, view switches and the like push state without any bus
+        // event. Both router entry points are debounced with their own timer,
+        // so arming ours after each call lands it behind the actual push.
+        for (const method of ["pushState", "replaceState"]) {
+            const original = router[method];
+            router[method] = (...args) => {
+                const result = original.apply(router, args);
+                scheduleHrefRefresh();
+                return result;
+            };
+        }
+        browser.addEventListener("hashchange", () => scheduleHrefRefresh());
 
         env.bus.addEventListener("MENUS:APP-CHANGED", () => {
             // Follow the app that is actually open again.
             state.navAppId = null;
         });
 
-        function trackRecent() {
-            const controller = action.currentController;
+        function trackRecent(controller) {
             const name = controller?.displayName;
-            if (!name) {
+            if (!name || controller !== action.currentController) {
                 return;
             }
-            const href = browser.location.pathname + browser.location.search;
+            const href = currentHref();
             const recents = state.recents.filter((recent) => recent.href !== href);
             recents.unshift({ name, href });
             state.recents = recents.slice(0, MAX_RECENTS);
@@ -212,6 +254,46 @@ export const saturnService = {
                     }
                 }
                 return loose ? [loose, ...sections] : sections;
+            },
+            /**
+             * Image of an app. Odoo 17 ships the icon as bare base64 (or, when
+             * the file is missing, only as the `module,path` it was declared
+             * with), not as something an `<img>` can load.
+             */
+            iconSrc(entry) {
+                const data = entry?.webIconData;
+                if (data) {
+                    if (data.startsWith("data:") || data.startsWith("/")) {
+                        return data;
+                    }
+                    const mimetype = entry.webIconDataMimetype || "image/png";
+                    return `data:${mimetype};base64,${data.replace(/\s/g, "")}`;
+                }
+                const parts = typeof entry?.webIcon === "string" ? entry.webIcon.split(",") : [];
+                return parts.length === 2 ? `/${parts[0]}/${parts[1]}` : null;
+            },
+            /** Icon font class of an app declared as `class,color,background`. */
+            iconClass(entry) {
+                const parts = typeof entry?.webIcon === "string" ? entry.webIcon.split(",") : [];
+                return (parts.length === 3 && parts[0]) || "ri-apps-2-line";
+            },
+            /** Link to a menu, in the form the stock navbar uses. */
+            menuHref(entry) {
+                if (!entry || typeof entry.id !== "number") {
+                    return "#";
+                }
+                const parts = [`menu_id=${entry.id}`];
+                if (entry.actionID) {
+                    parts.push(`action=${entry.actionID}`);
+                }
+                return "#" + parts.join("&");
+            },
+            /** Address of the displayed view, as stored in recents and bookmarks. */
+            currentHref,
+            /** Whether a menu entry points at the action currently displayed. */
+            isCurrentMenu(entry) {
+                const current = action.currentController?.action?.id;
+                return !!entry?.actionID && entry.actionID === current;
             },
             isPinned(appId) {
                 return state.pins.includes(appId);

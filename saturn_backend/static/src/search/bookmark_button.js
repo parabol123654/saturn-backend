@@ -1,7 +1,9 @@
+/** @odoo-module **/
+
+import { useState } from "@odoo/owl";
 import { patch } from "@web/core/utils/patch";
 import { ControlPanel } from "@web/search/control_panel/control_panel";
 import { useService } from "@web/core/utils/hooks";
-import { browser } from "@web/core/browser/browser";
 
 const CATEGORIES = {
     list: "dir",
@@ -28,13 +30,15 @@ patch(ControlPanel.prototype, {
     setup() {
         super.setup();
         this.saturn = useService("saturn");
-        // The service state is an Owl 3 proxy, so reading it during render is
-        // enough to keep the star in sync.
-        this.saturnState = this.saturn.state;
+        // Subscribing to the shared state keeps the star in sync.
+        this.saturnState = useState(this.saturn.state);
     },
 
     get saturnHref() {
-        return browser.location.pathname + browser.location.search;
+        // Reading the tracked address subscribes the star to navigation; the
+        // live one is what gets stored.
+        void this.saturnState.href;
+        return this.saturn.currentHref();
     },
 
     get saturnIsBookmarked() {

@@ -10,7 +10,7 @@
     // rule it feeds.
     --o-navbar-badge-color: #fff;
 
-    // Odoo 20 fills every systray entry from these, defaulting to the stock
+    // Odoo fills every systray entry from these, defaulting to the stock
     // navbar colour — a purple chip behind each icon on this chrome. Same
     // move as the badge: set the hooks rather than fight the rule.
     --NavBar-entry-backgroundColor: transparent;
@@ -67,10 +67,9 @@
     // because the badge already overhangs to the right.
     @media (min-width: 992px) {
         .o_menu_systray {
-            // Odoo 20 draws these with the `oi` font: messages, activities,
-            // debug menu.
+            // Messages, activities, debug menu.
             button.o_nav_entry,
-            button.o-dropdown:has(> .oi[data-icon="forum"], > .oi[data-icon="schedule"], > .oi[data-icon="bug_report"]) {
+            button.o-dropdown:has(> .fa-comments, > .fa-clock-o, > .fa-bug) {
                 margin-right: 10px !important;
 
                 &:has(.badge) {

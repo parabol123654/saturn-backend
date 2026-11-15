@@ -10,9 +10,10 @@ class IrHttp(models.AbstractModel):
     def color_scheme(self):
         """Resolve the colour scheme from the cookie, then the user setting.
 
-        Odoo Community hardcodes ``"light"`` here, so ``web.assets_web_dark`` is
-        never served and the *Switch Scheme* button would have no effect. The
-        cookie wins because it is what the switch writes for the current
+        Odoo 17 has no such hook: ``web.webclient_bootstrap`` tests the cookie
+        inline, so without a cookie the light bundle is served. This method is
+        what ``views/webclient_templates.xml`` makes that template ask instead.
+        The cookie wins because it is what the switch writes for the current
         browser; the stored setting is what carries the choice to a new browser
         or after the cookies are cleared. The chrome is designed on Odoo's dark
         palette, hence the dark default.

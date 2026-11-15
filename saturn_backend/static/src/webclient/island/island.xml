@@ -48,7 +48,7 @@
                         </div>
                         <div class="rolkit stb">
                             <div class="rolkit island_apps" role="listbox" t-att-class="{ u_editing_pins: this.state.editingPins }">
-                                <t t-foreach="this.pinnedApps" t-as="app" t-key="app.id"><t t-call="saturn_backend.Island.AppSquare" app="app"/></t>
+                                <t t-foreach="this.pinnedApps" t-as="app" t-key="app.id"><t t-call="saturn_backend.Island.AppSquare"/></t>
                             </div>
                             <p t-if="!this.pinnedApps.length" class="text-center opacity-50 mt-5">
                                 Nothing pinned yet — hover an app and use the star.
@@ -80,13 +80,13 @@
                         </div>
                         <div class="rolkit stb">
                             <div class="rolkit island_all_apps" role="listbox" t-att-class="{ u_editing_pins: this.state.editingPins }">
-                                <t t-foreach="this.apps" t-as="app" t-key="app.id"><t t-call="saturn_backend.Island.AppSquare" app="app"/></t>
+                                <t t-foreach="this.apps" t-as="app" t-key="app.id"><t t-call="saturn_backend.Island.AppSquare"/></t>
                             </div>
                             <div class="island_menu_results px-4" t-if="this.menuResults.length">
                                 <span class="island_menu_results_title text-uppercase fs-7 fw-sbold">Menus</span>
                                 <a t-foreach="this.menuResults" t-as="entry" t-key="entry.id"
                                    class="island_menu_result d-flex align-items-center text-decoration-none"
-                                   t-att-href="entry.href || '#'"
+                                   t-att-href="this.saturn.menuHref(entry)"
                                    t-on-click="(ev) => this.onEntryClick(entry, ev)">
                                     <i class="ri-corner-down-right-line me-2 opacity-50"/>
                                     <span t-out="entry.name"/>
@@ -128,7 +128,7 @@
                     <!-- Search -->
                     <div class="island_search_bar d-flex align-items-center border-top mt-auto pt-2 mx-3">
                         <div class="input-group rounded-3">
-                            <input t-ref="this.searchRef" class="form-control border-0 p-0 ms-2"
+                            <input t-ref="search" class="form-control border-0 p-0 ms-2"
                                    placeholder="Type to search..." type="text" autocomplete="off"
                                    data-allow-hotkeys="true"
                                    t-att-value="this.state.search"
@@ -148,7 +148,7 @@
 <t t-name="saturn_backend.Island.AppSquare">
     <div class="u_app_square" draggable="false">
         <a role="option" class="o_app d-block" draggable="false"
-           t-att-href="app.href || '#'"
+           t-att-href="this.saturn.menuHref(app)"
            t-att-data-menu-xmlid="app.xmlid"
            t-on-click="(ev) => this.onAppClick(app, ev)">
             <div class="u_app_icon_l2">
@@ -165,7 +165,7 @@
                     <i t-att-class="this.isAppBookmarked(app) ? 'ri-bookmark-fill' : 'ri-bookmark-line'"/>
                 </div>
                 <div class="u_app_icon_l1">
-                    <img t-if="app.webIconData" class="u_app_icon" draggable="false" t-att-src="app.webIconData" alt=""/>
+                    <img t-if="this.saturn.iconSrc(app)" class="u_app_icon" draggable="false" t-att-src="this.saturn.iconSrc(app)" alt=""/>
                     <div t-else="" class="u_app_icon d-flex align-items-center justify-content-center">
                         <i t-att-class="this.iconClass(app)"/>
                     </div>

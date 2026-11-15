@@ -1,3 +1,5 @@
+/** @odoo-module **/
+
 /**
  * Menu sections carry no icon in Odoo, so the sidebar derives one from the
  * section name. First keyword wins; unknown sections fall back to a neutral

@@ -1,8 +1,8 @@
-# Saturn Backend (Community) — Odoo 20
+# Saturn Backend (Community) — Odoo 17
 
-The Saturn backend chrome for Odoo 20: a
+The Saturn backend chrome for Odoo 17: a
 resizable side navigation, a full screen app drawer, pinned apps and a bookmark
-workspace, on a dark Inter-based palette.
+workspace, on a grayscale palette with light and dark schemes.
 
 ## What it changes
 
@@ -11,29 +11,32 @@ workspace, on a dark Inter-based palette.
 | Side navigation | Fixed 243 px panel, resizable by its right edge, collapsible to a 56 px icon rail. Switches between **Apps** (all apps) and **Menu** (current app's sections). Footer switches between **Recent** records and **pinned apps**. |
 | Hover flyout | Hovering an app opens a popover with that app's sections in wrapping 203 px cards, nested menus rendered as plain group headers. |
 | Navbar | Apps dropdown, brand and section menus are replaced by a single drawer toggle; height 46 px, `#1f2937`. |
-| App drawer | Full screen overlay with **Apps** / **Workspace** tabs, *Pinned* and *All Features* panes, squircle app tiles with pin stars, and a search field that filters apps and menus. Also acts as the home screen on `/odoo`. |
+| App drawer | Full screen overlay with **Apps** / **Workspace** tabs, *Pinned* and *All Features* panes, squircle app tiles with pin stars, and a search field that filters apps and menus. Also acts as the home screen when `/web` has no app to open. |
 | Workspace | Bookmarked views grouped by kind, added from the bookmark button in any control panel. |
 | Toolbar | Sidebar mode, colour scheme, activity hub, workspace and command palette. |
 | Systray | A second colour scheme toggle. The sidebar is hidden while the drawer is open, so this is the copy that stays reachable from every screen; it is lifted above the drawer on purpose. |
 
 ## The dark palette
 
-Odoo 20 **Community still has no working dark colour scheme**, which is easy to miss:
+Odoo 17 **Community still has no working dark colour scheme**, which is easy to miss:
 
-- `ir.http.color_scheme()` returns a hardcoded `"light"`, so
-  `web.assets_web_dark` is never served and a scheme switch does nothing;
+- `web.webclient_bootstrap` picks the bundle from the `color_scheme` cookie
+  alone, and nothing in Community ever writes that cookie, so
+  `web.assets_web_dark` is never served;
 - that bundle is only `web.assets_web` plus a handful of cosmetic
   `*.dark.scss` patches, so even when served it comes out identical to the
   light one.
 
 So the module ships the palette itself:
 
-- `models/ir_http.py` overrides `color_scheme()` to resolve the scheme from the
-  cookie, then the `color_scheme` field on `res.users.settings`, then dark. The
-  cookie is what the switch writes for the current browser; the setting is what
-  carries the choice to a new browser or past a cookie reset. `session_info()`
-  reports the resolved value so the client never re-derives it and cannot
-  disagree with the bundle that was actually served;
+- `models/ir_http.py` adds `color_scheme()`, which resolves the scheme from the
+  cookie, then the `color_scheme` field on `res.users.settings`, then dark, and
+  `views/webclient_templates.xml` makes `web.webclient_bootstrap` ask it instead
+  of testing the cookie inline. The cookie is what the switch writes for the
+  current browser; the setting is what carries the choice to a new browser or
+  past a cookie reset. `session_info()` reports the resolved value so the
+  client never re-derives it and cannot disagree with the bundle that was
+  actually served;
 - `static/src/scss/dark_variables.scss` is **prepended** to
   `web.assets_web_dark`, which puts it ahead of Odoo's `!default` declarations
   and makes it a real variable override. It replaces Odoo's grayscale with the
@@ -149,6 +152,13 @@ kept in `localStorage`, under a key scoped by database and user id — a browser
 profile is often shared, and one origin can serve several databases.
 
 ## Notes
+
+- Odoo 17 keeps the view state in the URL hash (`/web#action=…&menu_id=…`), so
+  recents and bookmarks store that whole address, and the current menu entry
+  is recognised by its action rather than by its path. Bookmarks are therefore
+  not portable to the `/odoo/…` URLs of Odoo 18 and later.
+- Bare `/web` always opens the user's home action or the first app, as in
+  stock Odoo 17, so the drawer is only the landing screen when there is none.
 
 - The icon font (Remix Icon, Apache-2.0) is vendored under
   `static/lib/remixicon/`; the backend makes no external requests.

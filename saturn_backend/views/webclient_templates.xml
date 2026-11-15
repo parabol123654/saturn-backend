@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Stock picks the bundle from the cookie alone. Ask ir.http instead, so
+         the stored user setting and the dark default are honoured too. -->
+    <template id="webclient_bootstrap" inherit_id="web.webclient_bootstrap">
+        <xpath expr="//t[@t-call-assets='web.assets_web_dark']/.." position="attributes">
+            <attribute name="t-if">request.env['ir.http'].color_scheme() == 'dark'</attribute>
+        </xpath>
+    </template>
+
+</odoo>
