@@ -1,4 +1,6 @@
-import { t, useProps } from "@odoo/owl";
+/** @odoo-module **/
+
+import { useState } from "@odoo/owl";
 import { MenuTree } from "@saturn_backend/webclient/sidenav/menu_tree";
 
 /**
@@ -9,16 +11,17 @@ import { MenuTree } from "@saturn_backend/webclient/sidenav/menu_tree";
 export class SaturnSubnav extends MenuTree {
     static template = "saturn_backend.Subnav";
 
-    props = useProps({
-        app: t.object(),
-        close: t.function().optional(),
-        onMouseEnter: t.function().optional(),
-        onMouseLeave: t.function().optional(),
-    });
+    static props = {
+        app: Object,
+        close: { type: Function, optional: true },
+        onMouseEnter: { type: Function, optional: true },
+        onMouseLeave: { type: Function, optional: true },
+        maxHeight: { type: Number, optional: true },
+    };
 
     setup() {
         super.setup();
-        this.state = this.saturn.state;
+        this.state = useState(this.saturn.state);
     }
 
     get sections() {

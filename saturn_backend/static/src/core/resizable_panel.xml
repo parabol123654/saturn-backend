@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+<t t-name="saturn_backend.ResizablePanel" owl="1">
+    <div class="o_resizable_panel d-flex flex-column" t-att-class="props.class" t-ref="container">
+        <t t-slot="default"/>
+        <div class="o_resizable_panel_handle position-absolute top-0 bottom-0"
+             t-att-class="props.handleSide === 'start' ? 'start-0' : 'end-0'"
+             t-on-mousedown="onMouseDown"/>
+    </div>
+</t>
+
+</templates>

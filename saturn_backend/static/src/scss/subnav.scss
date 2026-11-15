@@ -8,7 +8,7 @@
         --dropdown-link-hover-color: #fff;
         --dropdown-link-hover-bg: #{$saturn-bg};
         --dropdown-header-padding-x: 20px;
-        --dropdown-header-padding-y: 0.5rem;
+        --dropdown-header-padding-y: 0.66667rem;
         padding: 12px;
         max-height: 719px;
         gap: 10px;
@@ -65,7 +65,7 @@
     // Header of a nested menu group inside a section.
     .dropdown-menu_group {
         padding: 2px 15px;
-        font-size: 0.75rem;
+        font-size: 1rem;
         font-weight: 500;
         color: saturn-alpha(text, 0.55);
     }
@@ -76,7 +76,7 @@
         padding: 3px 15px;
         margin-bottom: 1px;
         border-radius: $saturn-radius-sm;
-        font-size: 0.83125rem;
+        font-size: 1.10833rem;
         color: $saturn-text;
         text-decoration: none;
 

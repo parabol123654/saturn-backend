@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
 <!-- One collapsible section card, shared by the sidebar and the flyout. -->
-<t t-name="saturn_backend.MenuSection">
+<t t-name="saturn_backend.MenuSection" owl="1">
     <div class="subnav_sect rolkit py-1" t-att-class="sectionClass">
         <div class="d-flex align-items-center cursor-pointer subnav_sect_header user-select-none"
              t-att-aria-expanded="this.saturn.isSectionOpen(section.id) ? 'true' : 'false'"
@@ -22,7 +22,7 @@
                        class="o-dropdown-item dropdown-item o-navigable subnav_entry"
                        t-att-class="{ on: this.isCurrentEntry(row.menu) }"
                        role="menuitem" tabindex="0"
-                       t-att-href="row.menu.href || '#'"
+                       t-att-href="this.saturn.menuHref(row.menu)"
                        t-att-data-menu-xmlid="row.menu.xmlid"
                        t-on-click="(ev) => this.onEntryClick(row.menu, ev)">
                         <span class="indicator-pill pe-none"/>
@@ -34,12 +34,13 @@
     </div>
 </t>
 
-<t t-name="saturn_backend.Subnav">
+<t t-name="saturn_backend.Subnav" owl="1">
     <div class="subnav_wrapper d-flex flex-column flex-wrap"
+         t-att-style="this.props.maxHeight ? `max-height: min(719px, ${this.props.maxHeight}px)` : undefined"
          t-on-mouseenter="() => this.props.onMouseEnter and this.props.onMouseEnter()"
          t-on-mouseleave="() => this.props.onMouseLeave and this.props.onMouseLeave()">
         <t t-foreach="this.sections" t-as="section" t-key="section.id">
-            <t t-call="saturn_backend.MenuSection" section="section" sectionClass="'border rounded ps-2 pe-1'"/>
+            <t t-call="saturn_backend.MenuSection"><t t-set="sectionClass" t-value="'border rounded ps-2 pe-1'"/></t>
         </t>
     </div>
 </t>

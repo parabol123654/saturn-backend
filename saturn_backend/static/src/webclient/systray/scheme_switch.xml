@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-<t t-name="saturn_backend.SchemeSwitch">
+<t t-name="saturn_backend.SchemeSwitch" owl="1">
     <button class="btn d-flex justify-content-center align-items-center o_nav_entry"
             title="Switch Scheme"
             t-on-click="() => this.saturn.switchColorScheme()">

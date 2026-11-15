@@ -1,8 +1,8 @@
+/** @odoo-module **/
+
 import { registry } from "@web/core/registry";
-import { proxy } from "@odoo/owl";
+import { reactive } from "@odoo/owl";
 import { _t } from "@web/core/l10n/translation";
-import { user } from "@web/core/user";
-import { cookie } from "@web/core/browser/cookie";
 import { browser } from "@web/core/browser/browser";
 import { session } from "@web/session";
 
@@ -12,10 +12,29 @@ const MIN_WIDTH = 186;
 
 // Scoped per database and user: one origin can serve several databases, and a
 // browser profile is often shared, so a single key would show one user the
-// record names of another. `session` carries no uid client side in Odoo 20 —
-// `user.userId` is the one that is actually populated.
+// record names of another.
 function recentsKey() {
-    return `saturn.recents.${session.db || "db"}.${user.userId ?? "anon"}`;
+    return `saturn.recents.${session.db || "db"}.${session.uid ?? "anon"}`;
+}
+
+/** Where the browser is: Odoo 16 keeps the whole route in the hash. */
+function currentHref() {
+    return browser.location.pathname + browser.location.search + browser.location.hash;
+}
+
+/**
+ * Identity of a hash route. The router writes `menu_id` and `cids` on its own
+ * schedule (and not at all on some paths), so the same screen is seen under
+ * several URLs; they say which app and companies are active, not which screen
+ * this is.
+ */
+function hrefKey(href) {
+    const [path, hash = ""] = String(href || "").split("#");
+    const params = new URLSearchParams(hash);
+    params.delete("menu_id");
+    params.delete("cids");
+    params.sort();
+    return `${path}#${params.toString()}`;
 }
 
 /** Parse a stored JSON list, tolerating anything that is not one. */
@@ -53,15 +72,16 @@ function clampWidth(width) {
  * ``res.users.settings``.
  */
 export const saturnService = {
-    dependencies: ["menu", "action", "ui", "notification"],
-    start(env, { menu, action, notification }) {
-        const settings = user.settings || {};
+    dependencies: ["menu", "action", "ui", "notification", "cookie", "orm", "router"],
+    start(env, { menu, action, notification, cookie, orm, router }) {
+        // Odoo 16 does not send `res.users.settings` to the web client, so
+        // the module ships them in its own slot of the session info.
+        const settings = session.saturn?.settings || {};
         const RECENTS_KEY = recentsKey();
 
-        // A plain OWL 3 proxy: every component render is a tracked
-        // computation, so reading this state from a template is enough to
-        // re-render on change — there is no `useState` wrapper any more.
-        const state = proxy({
+        // A shared reactive object: components subscribe to it with
+        // `useState(saturn.state)` and re-render on the keys they read.
+        const state = reactive({
             // Side navigation
             navMode: settings.saturn_nav_mode === "menu" ? "menu" : "apps",
             navAppId: null, // app pinned in "menu" mode; null == follow current app
@@ -85,21 +105,23 @@ export const saturnService = {
 
         // Keep the cookie in step with the scheme the server resolved. Stock
         // code reads the cookie directly (chart palettes, the code editor
-        // theme, the spreadsheet dashboard renderer), so on the dark default,
+        // theme), so on the dark default,
         // where no cookie has been written yet, those widgets would come out
         // light on a dark page.
         const resolvedScheme = session.saturn?.color_scheme;
         if (
             (resolvedScheme === "light" || resolvedScheme === "dark") &&
-            cookie.get("color_scheme") !== resolvedScheme
+            cookie.current.color_scheme !== resolvedScheme
         ) {
-            cookie.set("color_scheme", resolvedScheme);
+            cookie.setCookie("color_scheme", resolvedScheme);
         }
 
         function persist(key, value) {
             // Silently ignore write failures: the chrome must keep working even
             // when the user cannot store settings (public user, readonly db...).
-            Promise.resolve(user.setUserSettings(key, value)).catch(() => {});
+            return orm.silent
+                .call("res.users.settings", "saturn_set", [key, value])
+                .catch(() => {});
         }
 
         let widthTimer = null;
@@ -117,12 +139,13 @@ export const saturnService = {
         }
 
         function isHomeUrl() {
-            const path = browser.location.pathname.replace(/\/+$/, "");
-            return path === "/odoo" || path === "/web" || path === "";
+            // `/web` with nothing routed in the hash.
+            const hash = router.current.hash;
+            return !hash.action && !hash.model;
         }
 
         // The drawer takes over the whole screen, so it doubles as the home
-        // screen: landing on /odoo without an action opens it.
+        // screen: landing on /web without an action opens it.
         state.islandOpen = isHomeUrl();
 
         // Navigating from anywhere else (breadcrumb, browser back, a command)
@@ -139,7 +162,9 @@ export const saturnService = {
                 state.search = "";
                 openedOver = null;
             }
-            trackRecent();
+            // The router pushes the new hash on a debounce, so the URL is
+            // not the new one yet.
+            browser.setTimeout(trackRecent, 200);
         });
 
         env.bus.addEventListener("MENUS:APP-CHANGED", () => {
@@ -153,8 +178,9 @@ export const saturnService = {
             if (!name) {
                 return;
             }
-            const href = browser.location.pathname + browser.location.search;
-            const recents = state.recents.filter((recent) => recent.href !== href);
+            const href = currentHref();
+            const key = hrefKey(href);
+            const recents = state.recents.filter((recent) => hrefKey(recent.href) !== key);
             recents.unshift({ name, href });
             state.recents = recents.slice(0, MAX_RECENTS);
             storeRecents();
@@ -168,6 +194,43 @@ export const saturnService = {
             // ---------------------------------------------------------------
             // Apps
             // ---------------------------------------------------------------
+            currentHref,
+            /** Odoo 16 menus carry no href: build the hash route they open. */
+            menuHref(menu) {
+                if (!menu || !menu.actionID) {
+                    return "#";
+                }
+                return `/web#menu_id=${menu.id}&action=${menu.actionID}`;
+            },
+            /**
+             * Image of an app as something an `<img>` can load. Odoo 16 sends
+             * the bare base64 payload, without the `data:` prefix later
+             * versions add server side; SVG payloads start with "P" ("<svg").
+             */
+            iconData(menu) {
+                const data = menu?.webIconData;
+                if (!data) {
+                    return null;
+                }
+                if (data.startsWith("data:image") || data.startsWith("/")) {
+                    return data;
+                }
+                const mime = data.startsWith("P") ? "image/svg+xml" : "image/png";
+                return `data:${mime};base64,${data.replace(/\s/g, "")}`;
+            },
+            /**
+             * Odoo 16 sends the raw `web_icon` string. Apps without an image
+             * describe a font icon as "fa fa-x,colour,background".
+             */
+            iconClass(menu) {
+                const parts = typeof menu?.webIcon === "string" ? menu.webIcon.split(",") : [];
+                return parts.length === 3 && parts[0] ? parts[0] : "ri-apps-2-line";
+            },
+            /** Whether a menu entry opens the action currently displayed. */
+            isCurrentMenu(menu) {
+                const current = action.currentController?.action?.id;
+                return !!current && current === menu?.actionID;
+            },
             get apps() {
                 return menu.getApps().filter((app) => app.actionID || app.children?.length);
             },
@@ -332,7 +395,7 @@ export const saturnService = {
                 return order.filter((key) => groups.has(key)).map((key) => groups.get(key));
             },
             addBookmark(bookmark) {
-                if (state.bookmarks.some((existing) => existing.href === bookmark.href)) {
+                if (this.isBookmarked(bookmark.href)) {
                     notification.add(_t("This view is already bookmarked."), { type: "info" });
                     return;
                 }
@@ -341,11 +404,17 @@ export const saturnService = {
                 notification.add(_t("The bookmark has been saved."), { type: "success" });
             },
             removeBookmark(href) {
-                state.bookmarks = state.bookmarks.filter((bookmark) => bookmark.href !== href);
+                const key = hrefKey(href);
+                state.bookmarks = state.bookmarks.filter(
+                    (bookmark) => hrefKey(bookmark.href) !== key
+                );
                 persist("saturn_bookmarks", JSON.stringify(state.bookmarks));
             },
             isBookmarked(href) {
-                return state.bookmarks.some((bookmark) => bookmark.href === href);
+                // Reads `state.bookmarks`, so calling it from a component that
+                // subscribed with `useState` keeps that component in sync.
+                const key = hrefKey(href);
+                return state.bookmarks.some((bookmark) => hrefKey(bookmark.href) === key);
             },
 
             // ---------------------------------------------------------------
@@ -361,14 +430,14 @@ export const saturnService = {
                 if (reported === "light" || reported === "dark") {
                     return reported;
                 }
-                return cookie.get("color_scheme") === "light" ? "light" : "dark";
+                return cookie.current.color_scheme === "light" ? "light" : "dark";
             },
             async switchColorScheme() {
                 const target = this.scheme === "dark" ? "light" : "dark";
                 // Cookie for this browser, setting so the choice survives a
                 // cookie reset and follows the user to another one.
-                cookie.set("color_scheme", target);
-                await Promise.resolve(user.setUserSettings("color_scheme", target)).catch(() => {});
+                cookie.setCookie("color_scheme", target);
+                await persist("color_scheme", target);
                 browser.location.reload();
             },
             get companyId() {

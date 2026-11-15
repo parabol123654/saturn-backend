@@ -116,9 +116,9 @@
                 // drawer also renders correctly outside the backend bundle.
                 .nav-link {
                     display: block;
-                    padding: 0.3rem 0.6rem;
+                    padding: 0.4rem 0.8rem;
                     border-radius: $saturn-radius;
-                    font-size: 0.81375rem;
+                    font-size: 1.085rem;
                     font-weight: 500;
                     color: $saturn-text-dim;
                     text-decoration: none;
@@ -185,8 +185,8 @@
             display: grid;
             grid-template-columns: repeat(auto-fill, var(--u-app-cow));
             justify-content: center;
-            column-gap: 1.98rem;
-            row-gap: 2.3rem;
+            column-gap: 2.64rem;
+            row-gap: 3.06667rem;
             max-width: 980px;
             margin-inline: auto;
             overflow-x: hidden;
@@ -241,7 +241,7 @@
                 margin: 0 auto;
                 text-align: center;
                 color: $saturn-text-muted;
-                font-size: 0.875rem;
+                font-size: 1.16667rem;
             }
 
             .o_app {

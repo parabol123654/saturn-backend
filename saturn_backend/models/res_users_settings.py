@@ -1,13 +1,22 @@
-from odoo import fields, models
+from odoo import api, fields, models
+
+SETTINGS_FIELDS = (
+    "color_scheme",
+    "saturn_nav_mode",
+    "saturn_sidenav_collapsed",
+    "saturn_sidenav_width",
+    "saturn_pins",
+    "saturn_bookmarks",
+)
 
 
 class ResUsersSettings(models.Model):
     """Per-user chrome preferences.
 
-    ``res.users.settings`` records are pushed to the browser with the session
-    (``user.settings`` client side) and can be written back with
-    ``user.setUserSettings(key, value)``, which is what the sidebar and the app
-    drawer use to remember their state.
+    In Odoo 16 ``res.users.settings`` belongs to ``mail`` and only Discuss
+    reads it client side, so the values are sent with ``session_info`` (see
+    ``ir_http.py``) and written back through :meth:`saturn_set`, which is what
+    the sidebar and the app drawer use to remember their state.
     """
 
     _inherit = "res.users.settings"
@@ -35,3 +44,17 @@ class ResUsersSettings(models.Model):
         help="JSON list of bookmarked views shown in the drawer workspace tab.",
         default="[]",
     )
+
+    @api.model
+    def saturn_set(self, key, value):
+        """Store one chrome preference for the current user.
+
+        ``set_res_users_settings`` is not reused on purpose: it broadcasts the
+        change on the bus as a Discuss record update, and Discuss' client model
+        rejects fields it does not declare.
+        """
+        if key not in SETTINGS_FIELDS:
+            return False
+        settings = self._find_or_create_for_user(self.env.user)
+        settings.write({key: value})
+        return True

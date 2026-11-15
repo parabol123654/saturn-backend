@@ -1,9 +1,10 @@
 ///
 /// Dark palette for the backend — Saturn Theme grays.
 ///
-/// Odoo 20 Community ships no real dark colour scheme: `web.assets_web_dark`
-/// only adds a handful of cosmetic `*.dark.scss` patches, so the bundle comes out
-/// identical to the light one. This file is prepended to that bundle, i.e. it
+/// Odoo 16 Community ships no real dark colour scheme: the
+/// `web.dark_mode_assets_common` / `web.dark_mode_assets_backend` bundles exist
+/// but are the light ones plus a handful of cosmetic `*.dark.scss` patches (the
+/// palette itself is Enterprise). This file is prepended to both, i.e. it
 /// runs before Odoo's own `!default` declarations, which makes it a genuine
 /// variable override rather than a pile of CSS corrections.
 ///
@@ -48,6 +49,7 @@ $o-view-background-color: #1c1d1e;
 // White is what Black is in light mode: the colour a primary action takes.
 // Light Gray rather than pure white keeps a page of buttons from glaring.
 $o-brand-primary: #e1e3e4;
+$o-brand-odoo: #e1e3e4;
 $o-brand-secondary: #3c3d3e;
 $o-action: #e1e3e4;
 

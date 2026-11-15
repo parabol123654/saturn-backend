@@ -1,6 +1,8 @@
 from odoo import models
 from odoo.http import request
 
+from .res_users_settings import SETTINGS_FIELDS
+
 BRANDING_FIELDS = ("saturn_logo", "saturn_logo_mini", "saturn_background")
 
 
@@ -10,12 +12,14 @@ class IrHttp(models.AbstractModel):
     def color_scheme(self):
         """Resolve the colour scheme from the cookie, then the user setting.
 
-        Odoo Community hardcodes ``"light"`` here, so ``web.assets_web_dark`` is
-        never served and the *Switch Scheme* button would have no effect. The
-        cookie wins because it is what the switch writes for the current
-        browser; the stored setting is what carries the choice to a new browser
-        or after the cookies are cleared. The chrome is designed on Odoo's dark
-        palette, hence the dark default.
+        Odoo 16 has no such method: ``web.webclient_bootstrap`` tests the
+        ``color_scheme`` cookie inline to pick between the regular and the
+        ``web.dark_mode_assets_*`` bundles, so an absent cookie always means
+        light. ``views/webclient_templates.xml`` makes that template ask here
+        instead. The cookie wins because it is what the switch writes for the
+        current browser; the stored setting is what carries the choice to a
+        new browser or after the cookies are cleared. The chrome is designed
+        dark, hence the dark default.
         """
         scheme = request.httprequest.cookies.get("color_scheme")
         if scheme in ("light", "dark"):
@@ -46,6 +50,14 @@ class IrHttp(models.AbstractModel):
         )
         return {attachment["res_field"] for attachment in attachments}
 
+    def _saturn_user_settings(self):
+        if not request.session.uid:
+            return {}
+        settings = request.env.user.sudo().res_users_settings_ids[:1]
+        if not settings:
+            return {}
+        return settings.read(list(SETTINGS_FIELDS))[0]
+
     def session_info(self):
         info = super().session_info()
         company = request.env.company
@@ -55,6 +67,10 @@ class IrHttp(models.AbstractModel):
             # The client must not re-derive this: it decides how the chrome is
             # painted, and it has to agree with the bundle just served.
             "color_scheme": self.color_scheme(),
+            # Odoo 16 does not ship ``res.users.settings`` to the web client
+            # (only Discuss reads them, through its own store), so the chrome
+            # preferences travel with the session instead.
+            "settings": self._saturn_user_settings(),
             "has_logo": "saturn_logo" in present,
             "has_logo_mini": "saturn_logo_mini" in present,
             "has_background": "saturn_background" in present,

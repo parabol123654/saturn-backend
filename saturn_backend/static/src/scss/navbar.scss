@@ -10,9 +10,8 @@
     // rule it feeds.
     --o-navbar-badge-color: #fff;
 
-    // Odoo 20 fills every systray entry from these, defaulting to the stock
-    // navbar colour — a purple chip behind each icon on this chrome. Same
-    // move as the badge: set the hooks rather than fight the rule.
+    // Hooks of later Odoo versions (16 does not read them yet); kept so the
+    // sheet stays the same across the series.
     --NavBar-entry-backgroundColor: transparent;
     --NavBar-entry-backgroundColor--hover: #{saturn-alpha(text, 0.08)};
     --NavBar-entry-backgroundColor--focus: #{saturn-alpha(text, 0.08)};
@@ -54,6 +53,19 @@
         }
     }
 
+    // Odoo 16 colours every navbar entry near-white (it expects its own purple
+    // bar) through a hover mixin that outranks the generic entry rule above,
+    // which left the Discuss icon invisible on the light bar.
+    .o_menu_systray .o_MessagingMenu_toggler,
+    .o_menu_systray .o_mobile_menu_toggle {
+        color: var(--saturn-text-muted) !important;
+
+        &:hover,
+        &:focus {
+            color: var(--saturn-text) !important;
+        }
+    }
+
     // Without this the systray stretches its items to the full bar height.
     // Items whose button has an explicit height then sit at the top, and the
     // ones wrapped in a `d-md-block` div (company menu, user menu) cannot be
@@ -67,10 +79,10 @@
     // because the badge already overhangs to the right.
     @media (min-width: 992px) {
         .o_menu_systray {
-            // Odoo 20 draws these with the `oi` font: messages, activities,
-            // debug menu.
+            // Messages, activities, debug menu. In Odoo 16 the Discuss ones
+            // are links, not buttons.
             button.o_nav_entry,
-            button.o-dropdown:has(> .oi[data-icon="forum"], > .oi[data-icon="schedule"], > .oi[data-icon="bug_report"]) {
+            .dropdown-toggle:has(> .fa-comments, > .fa-clock-o, > .fa-bug) {
                 margin-right: 10px !important;
 
                 &:has(.badge) {
@@ -90,9 +102,9 @@
     }
 
     #island_toggler {
-        --btn-bg: transparent;
-        --btn-border-color: transparent;
-        --btn-color: #{$saturn-text};
+        // Bootstrap 5.1 (Odoo 16) has no `--btn-*` variables.
+        background-color: transparent;
+        border-color: transparent;
         margin: 0 5px 0 10px;
         color: $saturn-text;
         font-size: 1.2em;

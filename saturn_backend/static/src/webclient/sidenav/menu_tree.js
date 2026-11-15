@@ -1,6 +1,7 @@
+/** @odoo-module **/
+
 import { Component } from "@odoo/owl";
 import { useService } from "@web/core/utils/hooks";
-import { browser } from "@web/core/browser/browser";
 import { sectionIcon } from "@saturn_backend/core/section_icons";
 
 /**
@@ -18,7 +19,7 @@ export class MenuTree extends Component {
     }
 
     iconClass(app) {
-        return app?.webIcon?.iconClass || "ri-apps-2-line";
+        return this.saturn.iconClass(app);
     }
 
     /**
@@ -42,18 +43,14 @@ export class MenuTree extends Component {
     }
 
     isCurrentEntry(entry) {
-        const href = entry?.href || "";
-        if (!href || href === "#") {
-            return false;
-        }
-        return browser.location.pathname === href.split("?")[0];
+        // Hash routes carry volatile keys (cids, view_type...), so compare
+        // the action instead of the URL.
+        return this.saturn.isCurrentMenu(entry);
     }
 
     onEntryClick(entry, ev) {
         ev.preventDefault();
         this.menuService.selectMenu(entry);
-        // Owl 3 only defines `this.props` through `useProps`, and the sidebar
-        // declares none.
-        this.props?.close?.();
+        this.props.close?.();
     }
 }

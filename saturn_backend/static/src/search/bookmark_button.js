@@ -1,7 +1,9 @@
+/** @odoo-module **/
+
+import { useState } from "@odoo/owl";
 import { patch } from "@web/core/utils/patch";
 import { ControlPanel } from "@web/search/control_panel/control_panel";
 import { useService } from "@web/core/utils/hooks";
-import { browser } from "@web/core/browser/browser";
 
 const CATEGORIES = {
     list: "dir",
@@ -24,22 +26,22 @@ const ICONS = {
     cmd: "ri-layout-grid-line",
 };
 
-patch(ControlPanel.prototype, {
+patch(ControlPanel.prototype, "saturn_backend.ControlPanel", {
     setup() {
-        super.setup();
+        this._super(...arguments);
         this.saturn = useService("saturn");
-        // The service state is an Owl 3 proxy, so reading it during render is
-        // enough to keep the star in sync.
-        this.saturnState = this.saturn.state;
+        // Subscribing to the shared state keeps the star in sync.
+        this.saturnState = useState(this.saturn.state);
     },
 
     get saturnHref() {
-        return browser.location.pathname + browser.location.search;
+        return this.saturn.currentHref();
     },
 
     get saturnIsBookmarked() {
         const href = this.saturnHref;
-        return this.saturnState.bookmarks.some((bookmark) => bookmark.href === href);
+        // Reading the list here is what subscribes the button to it.
+        return this.saturnState.bookmarks.length >= 0 && this.saturn.isBookmarked(href);
     },
 
     /** Add or remove the displayed view from the drawer workspace. */

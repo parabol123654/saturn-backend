@@ -1,8 +1,10 @@
-import { onWillUnmount, useEffect } from "@odoo/owl";
+/** @odoo-module **/
+
+import { onWillUnmount, useEffect, useState } from "@odoo/owl";
+import { useBus, useService } from "@web/core/utils/hooks";
 import { registry } from "@web/core/registry";
-import { useService } from "@web/core/utils/hooks";
 import { usePopover } from "@web/core/popover/popover_hook";
-import { ResizablePanel } from "@web/core/resizable_panel/resizable_panel";
+import { ResizablePanel } from "@saturn_backend/core/resizable_panel";
 import { browser } from "@web/core/browser/browser";
 import { MenuTree } from "@saturn_backend/webclient/sidenav/menu_tree";
 import { SaturnSubnav } from "@saturn_backend/webclient/sidenav/subnav";
@@ -14,20 +16,36 @@ const HOVER_CLOSE_DELAY = 220;
 export class SaturnSidenav extends MenuTree {
     static template = "saturn_backend.Sidenav";
     static components = { ResizablePanel };
+    static props = {};
 
     setup() {
         super.setup();
         this.commandService = useService("command");
-        // `env.isSmall` is gone in Odoo 20; the ui service's getter reads a
-        // signal, so the sidebar still follows the breakpoint live.
+        // The ui service is a plain object in Odoo 16; it announces a
+        // breakpoint change on its bus, so re-render on that.
         this.ui = useService("ui");
-        this.state = this.saturn.state;
+        useBus(this.ui.bus, "resize", () => this.render());
+        this.state = useState(this.saturn.state);
 
-        this.subnav = usePopover(SaturnSubnav, {
-            position: "right-start",
-            popoverClass: "sidenav_2nd fs-6",
-            animation: false,
-        });
+        // Odoo 16's hook only knows `add()`, which returns the remover.
+        const popover = usePopover();
+        let closeSubnav = null;
+        this.subnav = {
+            open: (target, props) => {
+                this.subnav.close();
+                closeSubnav = popover.add(target, SaturnSubnav, props, {
+                    position: "right",
+                    popoverClass: "sidenav_2nd fs-6",
+                    onClose: () => (closeSubnav = null),
+                });
+            },
+            close: () => {
+                if (closeSubnav) {
+                    closeSubnav();
+                    closeSubnav = null;
+                }
+            },
+        };
         this.openTimer = null;
         this.closeTimer = null;
         // A timer still armed after teardown would open a popover from a
@@ -38,19 +56,19 @@ export class SaturnSidenav extends MenuTree {
         });
 
         // The panel is fixed, so the web client itself has to reserve the room.
-        // An Owl 3 effect tracks what it reads, so collapsing, resizing and
-        // crossing the breakpoint all re-run it without a dependency list.
-        useEffect(() => {
-            const visible = this.visible;
-            const width = this.state.collapsed ? COLLAPSED_WIDTH : this.state.width;
-            const root = document.documentElement;
-            root.style.setProperty("--uw-sidenav", `${visible ? width : 0}px`);
-            document.body.classList.toggle("saturn-nolside", !visible);
-            return () => {
-                root.style.removeProperty("--uw-sidenav");
-                document.body.classList.remove("saturn-nolside");
-            };
-        });
+        useEffect(
+            (visible, collapsed, stateWidth) => {
+                const width = collapsed ? COLLAPSED_WIDTH : stateWidth;
+                const root = document.documentElement;
+                root.style.setProperty("--uw-sidenav", `${visible ? width : 0}px`);
+                document.body.classList.toggle("saturn-nolside", !visible);
+                return () => {
+                    root.style.removeProperty("--uw-sidenav");
+                    document.body.classList.remove("saturn-nolside");
+                };
+            },
+            () => [this.visible, this.state.collapsed, this.state.width]
+        );
     }
 
     get visible() {
@@ -101,10 +119,24 @@ export class SaturnSidenav extends MenuTree {
             }
             this.subnav.open(target, {
                 app,
+                maxHeight: this.flyoutMaxHeight(target),
                 onMouseEnter: () => browser.clearTimeout(this.closeTimer),
                 onMouseLeave: () => this.scheduleSubnavClose(),
             });
         }, HOVER_OPEN_DELAY);
+    }
+
+    /**
+     * Room the flyout can take next to its row: it opens downwards from the
+     * row, or upwards ending at it, whichever side is taller. Capping the
+     * height there makes the wrapping column layout spill into another column
+     * instead of running off the bottom of the screen.
+     */
+    flyoutMaxHeight(target) {
+        const rect = target.getBoundingClientRect();
+        const below = browser.innerHeight - rect.top;
+        const above = rect.bottom;
+        return Math.max(160, Math.floor(Math.max(below, above) - 12));
     }
 
     scheduleSubnavClose() {
@@ -148,12 +180,9 @@ export class SaturnSidenav extends MenuTree {
     }
 
     openActivityHub() {
-        // Re-use the systray activity menu rather than duplicating it. Odoo 20
-        // draws its button with the `oi` icon font instead of FontAwesome.
-        const toggle = document.querySelector(
-            ".o_menu_systray .oi[data-icon='schedule'], .o_menu_systray .o-mail-ActivityMenu"
-        );
-        (toggle?.closest("button") || toggle)?.click();
+        // Re-use the systray activity menu rather than duplicating it.
+        const toggle = document.querySelector(".o_menu_systray .o_ActivityMenuView_dropdownToggle");
+        toggle?.click();
     }
 }
 

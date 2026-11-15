@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
 
-<t t-name="saturn_backend.Sidenav">
+<t t-name="saturn_backend.Sidenav" owl="1">
     <ResizablePanel t-if="this.visible"
                     class="this.panelClass"
                     handleSide="'end'"
@@ -11,7 +11,7 @@
 
         <!-- Brand -->
         <div class="sidenav_head">
-            <a class="d-flex navbar-brand m-0" href="/odoo">
+            <a class="d-flex navbar-brand m-0" href="/web">
                 <img t-if="!this.state.collapsed" class="navbar-fogo" t-att-src="this.saturn.logoUrl" alt=""/>
                 <img t-else="" class="navbar-mogo" t-att-src="this.saturn.logoMiniUrl" alt=""/>
             </a>
@@ -80,12 +80,12 @@
                 <div class="nav-item" t-foreach="this.apps" t-as="app" t-key="app.id">
                     <a class="o-dropdown-item dropdown-item o-navigable nav-link"
                        t-att-class="{ on: this.isCurrentApp(app) }"
-                       t-att-href="app.href || '#'"
+                       t-att-href="this.saturn.menuHref(app)"
                        t-att-data-menu-xmlid="app.xmlid"
                        t-on-mouseenter="(ev) => this.onAppHover(app, ev)"
                        t-on-click="(ev) => this.onAppClick(app, ev)">
                         <div class="icon text-center d-flex align-items-center justify-content-center pe-none">
-                            <img t-if="app.webIconData" t-att-src="app.webIconData" alt=""/>
+                            <img t-if="this.saturn.iconData(app)" t-att-src="this.saturn.iconData(app)" alt=""/>
                             <i t-else="" t-att-class="this.iconClass(app)"/>
                         </div>
                         <span class="nav-title text-truncate pe-none" t-att-title="app.name" t-out="app.name"/>
@@ -104,7 +104,7 @@
                     <div class="nav-link on" role="button" title="Pick another app"
                          t-on-click="() => this.saturn.backToApps()">
                         <div class="icon text-center d-flex align-items-center justify-content-center pe-none">
-                            <img t-if="this.saturn.navApp.webIconData" t-att-src="this.saturn.navApp.webIconData" alt=""/>
+                            <img t-if="this.saturn.iconData(this.saturn.navApp)" t-att-src="this.saturn.iconData(this.saturn.navApp)" alt=""/>
                             <i t-else="" t-att-class="this.iconClass(this.saturn.navApp)"/>
                         </div>
                         <span class="nav-title text-truncate pe-none" t-att-title="this.saturn.navApp.name" t-out="this.saturn.navApp.name"/>
@@ -115,7 +115,7 @@
                 </div>
 
                 <t t-foreach="this.sections" t-as="section" t-key="section.id">
-                    <t t-call="saturn_backend.MenuSection" section="section" sectionClass="'cockpit_sect'"/>
+                    <t t-call="saturn_backend.MenuSection"><t t-set="sectionClass" t-value="'cockpit_sect'"/></t>
                 </t>
             </t>
         </div>
@@ -156,10 +156,10 @@
                 <div class="u_foot_apps px-2 pb-2">
                     <a t-foreach="this.saturn.pinnedApps" t-as="app" t-key="app.id"
                        class="nav-link d-flex align-items-center text-decoration-none"
-                       t-att-href="app.href || '#'"
+                       t-att-href="this.saturn.menuHref(app)"
                        t-on-click="(ev) => this.onAppClick(app, ev)">
                         <div class="icon d-flex align-items-center justify-content-center pe-none">
-                            <img t-if="app.webIconData" t-att-src="app.webIconData" alt=""/>
+                            <img t-if="this.saturn.iconData(app)" t-att-src="this.saturn.iconData(app)" alt=""/>
                             <i t-else="" t-att-class="this.iconClass(app)"/>
                         </div>
                         <span class="nav-title text-truncate pe-none" t-out="app.name"/>
